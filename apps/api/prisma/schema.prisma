@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  BARISTA
+  MANAGER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PREPARING
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  MOMO
+  VNPAY
+  CREDIT_CARD
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+model User {
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  passwordHash        String
+  fullName            String
+  phoneNumber         String?
+  role                UserRole             @default(CUSTOMER)
+  loyaltyPoints       Int                  @default(0)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  orders              Order[]
+  loyaltyTransactions LoyaltyTransaction[]
+
+  @@map("users")
+}
+
+model Product {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  category    String
+  basePrice   Float
+  imageUrl    String
+  stock       Int         @default(100)
+  isAvailable Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  orderItems  OrderItem[]
+
+  @@map("products")
+}
+
+model Order {
+  id                  String               @id @default(uuid())
+  orderCode           String               @unique
+  userId              String
+  user                User                 @relation(fields: [userId], references: [id])
+  subTotal            Float
+  discountAmount      Float                @default(0)
+  totalAmount         Float
+  status              OrderStatus          @default(PENDING)
+  note                String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  items               OrderItem[]
+  payment             Payment?
+  promotionId         String?
+  promotion           Promotion?           @relation(fields: [promotionId], references: [id])
+  loyaltyTransactions LoyaltyTransaction[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  size       String   @default("M")
+  sweetLevel Int      @default(100)
+  iceLevel   Int      @default(100)
+  toppings   String[] @default([])
+  unitPrice  Float
+  quantity   Int      @default(1)
+  itemTotal  Float
+
+  @@map("order_items")
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  orderId        String        @unique
+  order          Order         @relation(fields: [orderId], references: [id])
+  amount         Float
+  method         PaymentMethod @default(MOMO)
+  status         PaymentStatus @default(PENDING)
+  transactionCode String?      @unique
+  idempotencyKey String?       @unique
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+
+  @@map("payments")
+}
+
+model Promotion {
+  id                String       @id @default(uuid())
+  code              String       @unique
+  description       String?
+  discountType      DiscountType @default(PERCENTAGE)
+  discountValue     Float
+  minOrderAmount    Float        @default(0)
+  maxDiscountAmount Float?
+  validFrom         DateTime     @default(now())
+  validTo           DateTime
+  isActive          Boolean      @default(true)
+  orders            Order[]
+
+  @@map("promotions")
+}
+
+model LoyaltyTransaction {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  orderId         String?
+  order           Order?   @relation(fields: [orderId], references: [id])
+  points          Int
+  transactionType String   @default("EARN") // EARN, REDEEM
+  createdAt       DateTime @default(now())
+
+  @@map("loyalty_transactions")
+}
+
+model IdempotencyRecord {
+  key          String   @id
+  responseData String
+  statusCode   Int      @default(200)
+  createdAt    DateTime @default(now())
+
+  @@map("idempotency_records")
+}
