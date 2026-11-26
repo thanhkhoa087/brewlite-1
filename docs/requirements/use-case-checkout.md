@@ -76,17 +76,17 @@ PaymentService <-- UC_ProcessPay
 2. Client gửi yêu cầu tạo đơn: `POST /orders` kèm Bearer Token (JWT).
 3. Backend NestJS xác thực JWT hợp lệ.
 4. Backend mở PostgreSQL Database Transaction:
-   - Kiểm tra tồn kho của tất cả sản phẩm trong giỏ hàng.
-   - Tính toán lại tổng tiền từ server để phòng chống can thiệp giá từ client.
+   - Kiểm tra tồn kho nguyên liệu/sản phẩm của tất cả món trong giỏ hàng.
+   - Tính toán lại tổng tiền từ server dựa trên `basePrice` trong DB để phòng chống can thiệp giá từ client (Price Tampering).
+   - Trừ định lượng nguyên liệu/tồn kho tạm thời (giữ chỗ) bằng điều kiện nguyên tử chống race condition.
    - Tạo đơn hàng mới với mã tham chiếu (ví dụ: `BWL-89421`) và trạng thái `PENDING`.
    - Commit transaction và trả về `orderId` cùng tổng tiền.
-5. Client gửi yêu cầu thanh toán: `POST /payments/process` kèm Header `Idempotency-Key` và payload `{ orderId, paymentMethod: 'MOMO', amount }`.
-6. Payment Service kiểm tra `Idempotency-Key`: chưa tồn tại giao dịch xử lý trước đó.
+5. Client gửi yêu cầu thanh toán: `POST /api/payments/process` kèm Header `Idempotency-Key` và payload `{ orderId, method: 'MOMO', amount }`.
+6. Payment Service kiểm tra `Idempotency-Key` trong bảng `Payment` (PostgreSQL): chưa tồn tại giao dịch xử lý trước đó.
 7. Payment Service gửi yêu cầu trừ tiền mô phỏng (Mock Gateway Simulation) và nhận kết quả thành công.
-8. Backend cập nhật trạng thái bản ghi Payment thành `COMPLETED`, cập nhật Order thành `PAID`, và trừ tồn kho các món đã đặt.
-9. Backend lưu `Idempotency-Key` cùng kết quả phản hồi vào cache/database.
-10. Hệ thống trả về `status: 200 OK` kèm chi tiết hóa đơn.
-11. Giao diện Next.js xóa sạch giỏ hàng và điều hướng người dùng tới màn hình theo dõi trạng thái đơn hàng.
+8. Backend cập nhật trạng thái bản ghi Payment thành `COMPLETED` (kèm `idempotencyKey`), cập nhật Order thành `PAID`.
+9. Hệ thống trả về `status: 200 OK` kèm chi tiết hóa đơn.
+10. Giao diện Next.js xóa sạch giỏ hàng và điều hướng người dùng tới màn hình theo dõi trạng thái đơn hàng.
 
 ### 4.2. Luồng thay thế (Alternative Flows)
 - **A1: Khách hàng gửi lại yêu cầu thanh toán do mạng chập chờn (Idempotency Trigger):**
@@ -107,7 +107,7 @@ PaymentService <-- UC_ProcessPay
   - Client lưu lại trạng thái giỏ hàng vào LocalStorage và hiển thị modal đăng nhập lại mà không làm mất món.
 - **E3: Cổng thanh toán từ chối hoặc tài khoản không đủ số dư:**
   - Tại bước 7, Mock Payment Service trả về kết quả giao dịch thất bại (`PAYMENT_FAILED`).
-  - Backend ghi nhận giao dịch `Payment` là `FAILED`, cập nhật trạng thái `Order` là `CANCELLED`.
+  - Backend ghi nhận giao dịch `Payment` là `FAILED`, cập nhật trạng thái `Order` là `CANCELLED`, và hoàn lại định lượng nguyên liệu/tồn kho đã giữ chỗ.
   - Client hiển thị thông báo: "Giao dịch không thành công. Vui lòng kiểm tra lại tài khoản hoặc chọn phương thức khác."
 
 ---
