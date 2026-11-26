@@ -254,120 +254,136 @@ def generate_activity_svg():
     print("Generated activity-checkout.svg")
 
 def generate_class_svg():
-    svg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 620" width="100%" height="100%" style="background:#ffffff; font-family:'Segoe UI', Arial, sans-serif;">
+    svg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 660" width="100%" height="100%" style="background:#ffffff; font-family:'Segoe UI', Arial, sans-serif;">
   <!-- Title -->
-  <text x="460" y="28" font-size="17" font-weight="bold" text-anchor="middle" fill="#0f172a">SƠ ĐỒ LỚP MIỀN NGHIỆP VỤ (DOMAIN CLASS DIAGRAM) - BREWLITE</text>
+  <text x="480" y="28" font-size="17" font-weight="bold" text-anchor="middle" fill="#0f172a">SƠ ĐỒ LỚP MIỀN NGHIỆP VỤ (DOMAIN CLASS DIAGRAM) - BREWLITE</text>
 
-  <!-- Class User (No loyaltyPoints because FR-10 is Won't) -->
-  <rect x="30" y="50" width="180" height="140" rx="6" fill="#f8fafc" stroke="#475569" stroke-width="1.2"/>
-  <rect x="30" y="50" width="180" height="26" fill="#e2e8f0" stroke="#475569" stroke-width="1.2"/>
-  <text x="120" y="68" font-size="12" font-weight="bold" text-anchor="middle">User</text>
+  <!-- Class User -->
+  <rect x="30" y="50" width="185" height="155" rx="6" fill="#f8fafc" stroke="#475569" stroke-width="1.2"/>
+  <rect x="30" y="50" width="185" height="26" fill="#e2e8f0" stroke="#475569" stroke-width="1.2"/>
+  <text x="122" y="68" font-size="12" font-weight="bold" text-anchor="middle">User</text>
   <text x="40" y="92" font-size="10" fill="#334155">- id: String</text>
   <text x="40" y="108" font-size="10" fill="#334155">- email: String</text>
   <text x="40" y="124" font-size="10" fill="#334155">- fullName: String</text>
   <text x="40" y="140" font-size="10" fill="#334155">- role: UserRole</text>
-  <line x1="30" y1="150" x2="210" y2="150" stroke="#cbd5e1"/>
-  <text x="40" y="168" font-size="10" fill="#1e293b">+ register(), login()</text>
+  <text x="40" y="156" font-size="10" fill="#334155">- loyaltyPoints: Int</text>
+  <line x1="30" y1="168" x2="215" y2="168" stroke="#cbd5e1"/>
+  <text x="40" y="186" font-size="10" fill="#1e293b">+ register(), login()</text>
 
   <!-- Class Order -->
-  <rect x="290" y="50" width="200" height="185" rx="6" fill="#f0f9ff" stroke="#0284c7" stroke-width="1.2"/>
-  <rect x="290" y="50" width="200" height="26" fill="#bae6fd" stroke="#0284c7" stroke-width="1.2"/>
-  <text x="390" y="68" font-size="12" font-weight="bold" text-anchor="middle">Order</text>
-  <text x="300" y="92" font-size="10" fill="#0369a1">- id: String</text>
-  <text x="300" y="108" font-size="10" fill="#0369a1">- orderCode: String</text>
-  <text x="300" y="124" font-size="10" fill="#0369a1">- promotionId: String</text>
-  <text x="300" y="140" font-size="10" fill="#0369a1">- subTotal: Decimal</text>
-  <text x="300" y="156" font-size="10" fill="#0369a1">- totalAmount: Decimal</text>
-  <text x="300" y="172" font-size="10" fill="#0369a1">- status: OrderStatus</text>
-  <line x1="290" y1="184" x2="490" y2="184" stroke="#bae6fd"/>
-  <text x="300" y="200" font-size="10" fill="#0c4a6e">+ calculateTotal(): Decimal</text>
-  <text x="300" y="214" font-size="10" fill="#0c4a6e">+ cancel(): Void</text>
+  <rect x="295" y="50" width="200" height="185" rx="6" fill="#f0f9ff" stroke="#0284c7" stroke-width="1.2"/>
+  <rect x="295" y="50" width="200" height="26" fill="#bae6fd" stroke="#0284c7" stroke-width="1.2"/>
+  <text x="395" y="68" font-size="12" font-weight="bold" text-anchor="middle">Order</text>
+  <text x="305" y="92" font-size="10" fill="#0369a1">- id: String</text>
+  <text x="305" y="108" font-size="10" fill="#0369a1">- orderCode: String</text>
+  <text x="305" y="124" font-size="10" fill="#0369a1">- promotionId: String</text>
+  <text x="305" y="140" font-size="10" fill="#0369a1">- subTotal: Decimal</text>
+  <text x="305" y="156" font-size="10" fill="#0369a1">- totalAmount: Decimal</text>
+  <text x="305" y="172" font-size="10" fill="#0369a1">- status: OrderStatus</text>
+  <line x1="295" y1="184" x2="495" y2="184" stroke="#bae6fd"/>
+  <text x="305" y="200" font-size="10" fill="#0c4a6e">+ calculateTotal(): Decimal</text>
+  <text x="305" y="214" font-size="10" fill="#0c4a6e">+ cancel(): Void</text>
 
   <!-- Class OrderItem -->
-  <rect x="570" y="50" width="180" height="175" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.2"/>
-  <rect x="570" y="50" width="180" height="26" fill="#bbf7d0" stroke="#16a34a" stroke-width="1.2"/>
-  <text x="660" y="68" font-size="12" font-weight="bold" text-anchor="middle">OrderItem</text>
-  <text x="580" y="92" font-size="10" fill="#15803d">- id: String</text>
-  <text x="580" y="108" font-size="10" fill="#15803d">- size: String (S, M, L)</text>
-  <text x="580" y="124" font-size="10" fill="#15803d">- sweetLevel: Int</text>
-  <text x="580" y="140" font-size="10" fill="#15803d">- iceLevel: Int</text>
-  <text x="580" y="156" font-size="10" fill="#15803d">- quantity: Int</text>
-  <text x="580" y="172" font-size="10" fill="#15803d">- itemTotal: Decimal</text>
-  <line x1="570" y1="184" x2="750" y2="184" stroke="#bbf7d0"/>
-  <text x="580" y="202" font-size="10" fill="#14532d">+ computeItemTotal()</text>
+  <rect x="575" y="50" width="185" height="175" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.2"/>
+  <rect x="575" y="50" width="185" height="26" fill="#bbf7d0" stroke="#16a34a" stroke-width="1.2"/>
+  <text x="667" y="68" font-size="12" font-weight="bold" text-anchor="middle">OrderItem</text>
+  <text x="585" y="92" font-size="10" fill="#15803d">- id: String</text>
+  <text x="585" y="108" font-size="10" fill="#15803d">- size: String (S, M, L)</text>
+  <text x="585" y="124" font-size="10" fill="#15803d">- sweetLevel: Int</text>
+  <text x="585" y="140" font-size="10" fill="#15803d">- iceLevel: Int</text>
+  <text x="585" y="156" font-size="10" fill="#15803d">- quantity: Int</text>
+  <text x="585" y="172" font-size="10" fill="#15803d">- itemTotal: Decimal</text>
+  <line x1="575" y1="184" x2="760" y2="184" stroke="#bbf7d0"/>
+  <text x="585" y="202" font-size="10" fill="#14532d">+ computeItemTotal()</text>
 
   <!-- Class Product -->
-  <rect x="570" y="300" width="180" height="160" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="1.2"/>
-  <rect x="570" y="300" width="180" height="26" fill="#fde68a" stroke="#d97706" stroke-width="1.2"/>
-  <text x="660" y="318" font-size="12" font-weight="bold" text-anchor="middle">Product</text>
-  <text x="580" y="342" font-size="10" fill="#92400e">- id: String</text>
-  <text x="580" y="358" font-size="10" fill="#92400e">- name: String</text>
-  <text x="580" y="374" font-size="10" fill="#92400e">- category: String</text>
-  <text x="580" y="390" font-size="10" fill="#92400e">- basePrice: Decimal</text>
-  <text x="580" y="406" font-size="10" fill="#92400e">- stock: Int</text>
-  <line x1="570" y1="418" x2="750" y2="418" stroke="#fde68a"/>
-  <text x="580" y="434" font-size="10" fill="#78350f">+ checkAvailability()</text>
-  <text x="580" y="448" font-size="10" fill="#78350f">+ deductStock(qty)</text>
+  <rect x="575" y="300" width="185" height="160" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="1.2"/>
+  <rect x="575" y="300" width="185" height="26" fill="#fde68a" stroke="#d97706" stroke-width="1.2"/>
+  <text x="667" y="318" font-size="12" font-weight="bold" text-anchor="middle">Product</text>
+  <text x="585" y="342" font-size="10" fill="#92400e">- id: String</text>
+  <text x="585" y="358" font-size="10" fill="#92400e">- name: String</text>
+  <text x="585" y="374" font-size="10" fill="#92400e">- category: String</text>
+  <text x="585" y="390" font-size="10" fill="#92400e">- basePrice: Decimal</text>
+  <text x="585" y="406" font-size="10" fill="#92400e">- stock: Int</text>
+  <line x1="575" y1="418" x2="760" y2="418" stroke="#fde68a"/>
+  <text x="585" y="434" font-size="10" fill="#78350f">+ checkAvailability()</text>
+  <text x="585" y="448" font-size="10" fill="#78350f">+ deductStock(qty)</text>
 
   <!-- Class Payment -->
-  <rect x="290" y="310" width="200" height="170" rx="6" fill="#fdf2f8" stroke="#db2777" stroke-width="1.2"/>
-  <rect x="290" y="310" width="200" height="26" fill="#fbcfe8" stroke="#db2777" stroke-width="1.2"/>
-  <text x="390" y="328" font-size="12" font-weight="bold" text-anchor="middle">Payment</text>
-  <text x="300" y="352" font-size="10" fill="#9d174d">- id: String</text>
-  <text x="300" y="368" font-size="10" fill="#9d174d">- amount: Decimal</text>
-  <text x="300" y="384" font-size="10" fill="#9d174d">- method: PaymentMethod</text>
-  <text x="300" y="400" font-size="10" fill="#9d174d">- status: PaymentStatus</text>
-  <text x="300" y="416" font-size="10" fill="#9d174d">- idempotencyKey: String</text>
-  <text x="300" y="432" font-size="10" fill="#9d174d">- transactionCode: String</text>
-  <line x1="290" y1="444" x2="490" y2="444" stroke="#fbcfe8"/>
-  <text x="300" y="460" font-size="10" fill="#831843">+ processPayment()</text>
+  <rect x="295" y="310" width="200" height="170" rx="6" fill="#fdf2f8" stroke="#db2777" stroke-width="1.2"/>
+  <rect x="295" y="310" width="200" height="26" fill="#fbcfe8" stroke="#db2777" stroke-width="1.2"/>
+  <text x="395" y="328" font-size="12" font-weight="bold" text-anchor="middle">Payment</text>
+  <text x="305" y="352" font-size="10" fill="#9d174d">- id: String</text>
+  <text x="305" y="368" font-size="10" fill="#9d174d">- amount: Decimal</text>
+  <text x="305" y="384" font-size="10" fill="#9d174d">- method: PaymentMethod</text>
+  <text x="305" y="400" font-size="10" fill="#9d174d">- status: PaymentStatus</text>
+  <text x="305" y="416" font-size="10" fill="#9d174d">- idempotencyKey: String</text>
+  <text x="305" y="432" font-size="10" fill="#9d174d">- transactionCode: String</text>
+  <line x1="295" y1="444" x2="495" y2="444" stroke="#fbcfe8"/>
+  <text x="305" y="460" font-size="10" fill="#831843">+ processPayment()</text>
 
-  <!-- Promotion (Connected to Order) -->
-  <rect x="30" y="270" width="180" height="140" rx="6" fill="#f3e8ff" stroke="#9333ea" stroke-width="1.2"/>
-  <rect x="30" y="270" width="180" height="26" fill="#e9d5ff" stroke="#9333ea" stroke-width="1.2"/>
-  <text x="120" y="288" font-size="12" font-weight="bold" text-anchor="middle">Promotion</text>
-  <text x="40" y="312" font-size="10" fill="#6b21a8">- id: String</text>
-  <text x="40" y="328" font-size="10" fill="#6b21a8">- code: String</text>
-  <text x="40" y="344" font-size="10" fill="#6b21a8">- discountValue: Decimal</text>
-  <text x="40" y="360" font-size="10" fill="#6b21a8">- isActive: Boolean</text>
-  <line x1="30" y1="372" x2="210" y2="372" stroke="#e9d5ff"/>
-  <text x="40" y="388" font-size="10" fill="#581c87">+ applyDiscount()</text>
+  <!-- Class Promotion -->
+  <rect x="30" y="275" width="185" height="140" rx="6" fill="#f3e8ff" stroke="#9333ea" stroke-width="1.2"/>
+  <rect x="30" y="275" width="185" height="26" fill="#e9d5ff" stroke="#9333ea" stroke-width="1.2"/>
+  <text x="122" y="293" font-size="12" font-weight="bold" text-anchor="middle">Promotion</text>
+  <text x="40" y="317" font-size="10" fill="#6b21a8">- id: String</text>
+  <text x="40" y="333" font-size="10" fill="#6b21a8">- code: String</text>
+  <text x="40" y="349" font-size="10" fill="#6b21a8">- discountValue: Decimal</text>
+  <text x="40" y="365" font-size="10" fill="#6b21a8">- isActive: Boolean</text>
+  <line x1="30" y1="377" x2="215" y2="377" stroke="#e9d5ff"/>
+  <text x="40" y="393" font-size="10" fill="#581c87">+ applyDiscount()</text>
+
+  <!-- Class LoyaltyTransaction -->
+  <rect x="30" y="465" width="210" height="150" rx="6" fill="#ecfeff" stroke="#0891b2" stroke-width="1.2"/>
+  <rect x="30" y="465" width="210" height="26" fill="#cffafe" stroke="#0891b2" stroke-width="1.2"/>
+  <text x="135" y="483" font-size="12" font-weight="bold" text-anchor="middle" fill="#155e75">LoyaltyTransaction</text>
+  <text x="40" y="507" font-size="10" fill="#164e63">- id: String</text>
+  <text x="40" y="523" font-size="10" fill="#164e63">- userId: String</text>
+  <text x="40" y="539" font-size="10" fill="#164e63">- orderId: String</text>
+  <text x="40" y="555" font-size="10" fill="#164e63">- points: Int</text>
+  <text x="40" y="571" font-size="10" fill="#164e63">- transactionType: String</text>
+  <line x1="30" y1="583" x2="240" y2="583" stroke="#a5f3fc"/>
+  <text x="40" y="599" font-size="10" fill="#155e75">+ calculatePoints(amount)</text>
 
   <!-- Relationships -->
-  <!-- User to Order (1 to 0..*) -->
-  <line x1="210" y1="110" x2="290" y2="110" stroke="#334155" stroke-width="1.5"/>
-  <text x="220" y="104" font-size="10">1</text>
-  <text x="270" y="104" font-size="10">0..*</text>
-  <text x="235" y="125" font-size="9" fill="#64748b">places &gt;</text>
+  <line x1="215" y1="110" x2="295" y2="110" stroke="#334155" stroke-width="1.5"/>
+  <text x="225" y="104" font-size="10">1</text>
+  <text x="275" y="104" font-size="10">0..*</text>
+  <text x="240" y="125" font-size="9" fill="#64748b">places &gt;</text>
 
-  <!-- Order to OrderItem (Composition 1 to 1..*) -->
-  <line x1="490" y1="110" x2="570" y2="110" stroke="#334155" stroke-width="1.5"/>
-  <polygon points="490,110 498,105 506,110 498,115" fill="#334155"/>
-  <text x="512" y="104" font-size="10">1</text>
-  <text x="550" y="104" font-size="10">1..*</text>
+  <line x1="495" y1="110" x2="575" y2="110" stroke="#334155" stroke-width="1.5"/>
+  <polygon points="495,110 503,105 511,110 503,115" fill="#334155"/>
+  <text x="517" y="104" font-size="10">1</text>
+  <text x="555" y="104" font-size="10">1..*</text>
 
-  <!-- OrderItem to Product (0..* to 1) -->
-  <line x1="660" y1="225" x2="660" y2="300" stroke="#334155" stroke-width="1.5"/>
-  <text x="668" y="240" font-size="10">0..*</text>
-  <text x="668" y="290" font-size="10">1</text>
+  <line x1="667" y1="225" x2="667" y2="300" stroke="#334155" stroke-width="1.5"/>
+  <text x="675" y="240" font-size="10">0..*</text>
+  <text x="675" y="290" font-size="10">1</text>
 
-  <!-- Order to Payment (1 to 0..1) -->
-  <line x1="390" y1="235" x2="390" y2="310" stroke="#334155" stroke-width="1.5"/>
-  <text x="396" y="250" font-size="10">1</text>
-  <text x="396" y="300" font-size="10">0..1</text>
-  <text x="405" y="275" font-size="9" fill="#64748b">settled by</text>
+  <line x1="395" y1="235" x2="395" y2="310" stroke="#334155" stroke-width="1.5"/>
+  <text x="401" y="250" font-size="10">1</text>
+  <text x="401" y="300" font-size="10">0..1</text>
 
-  <!-- Order to Promotion (0..* to 0..1 - Connected!) -->
-  <line x1="290" y1="180" x2="210" y2="330" stroke="#9333ea" stroke-width="1.5"/>
+  <line x1="295" y1="180" x2="215" y2="330" stroke="#9333ea" stroke-width="1.5"/>
   <text x="280" y="195" font-size="10" fill="#7e22ce">0..*</text>
   <text x="220" y="325" font-size="10" fill="#7e22ce">0..1</text>
-  <text x="248" y="255" font-size="9" fill="#9333ea" font-weight="bold">uses coupon &gt;</text>
+
+  <!-- User to LoyaltyTransaction -->
+  <polyline points="30,150 12,150 12,535 30,535" fill="none" stroke="#0891b2" stroke-width="1.5"/>
+  <text x="15" y="142" font-size="9" fill="#0e7490">1</text>
+  <text x="14" y="528" font-size="9" fill="#0e7490">0..*</text>
+
+  <!-- Order to LoyaltyTransaction -->
+  <polyline points="295,215 268,215 268,535 240,535" fill="none" stroke="#0891b2" stroke-width="1.5"/>
+  <text x="272" y="210" font-size="9" fill="#0e7490">0..1</text>
+  <text x="245" y="528" font-size="9" fill="#0e7490">0..*</text>
 </svg>'''
     save_to_all("class-diagram.svg", svg)
     print("Generated class-diagram.svg")
 
 def generate_deployment_svg():
-    svg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 680" width="100%" height="100%" style="background:#ffffff; font-family:'Segoe UI', Arial, sans-serif;">
+    svg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" width="100%" height="100%" style="background:#ffffff; font-family:'Segoe UI', Arial, sans-serif;">
   <defs>
     <marker id="dep-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 1 L 10 5 L 0 9 z" fill="#1e293b" />
@@ -375,103 +391,220 @@ def generate_deployment_svg():
   </defs>
 
   <!-- Title -->
-  <text x="470" y="28" font-size="17" font-weight="bold" text-anchor="middle" fill="#0f172a">SƠ ĐỒ TRIỂN KHAI PRODUCTION (DEPLOYMENT DIAGRAM) - BREWLITE</text>
+  <text x="480" y="28" font-size="17" font-weight="bold" text-anchor="middle" fill="#0f172a">SƠ ĐỒ TRIỂN KHAI (DEPLOYMENT DIAGRAM) - LOCAL, CI/CD &amp; PRODUCTION</text>
 
   <!-- Client Zone -->
-  <rect x="30" y="55" width="220" height="220" rx="10" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
-  <text x="45" y="80" font-size="12" font-weight="bold" fill="#334155">&lt;&lt;Device&gt;&gt; Khách hàng</text>
-  <rect x="50" y="100" width="180" height="150" rx="8" fill="#ffffff" stroke="#94a3b8"/>
-  <text x="140" y="125" font-size="11" font-weight="bold" text-anchor="middle" fill="#0f172a">Smartphone / Laptop</text>
-  <rect x="65" y="145" width="150" height="85" rx="6" fill="#e0f2fe" stroke="#38bdf8"/>
-  <text x="140" y="172" font-size="10" font-weight="bold" text-anchor="middle" fill="#0369a1">&lt;&lt;Browser / PWA&gt;&gt;</text>
-  <text x="140" y="192" font-size="9" text-anchor="middle" fill="#0284c7">Next.js Client Bundle</text>
-  <text x="140" y="210" font-size="9" text-anchor="middle" fill="#0284c7">Service Worker &amp; LocalStorage</text>
+  <rect x="25" y="55" width="230" height="175" rx="10" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+  <text x="40" y="78" font-size="12" font-weight="bold" fill="#334155">&lt;&lt;Device&gt;&gt; Khách hàng</text>
+  <rect x="42" y="92" width="196" height="122" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="140" y="114" font-size="11" font-weight="bold" text-anchor="middle" fill="#0f172a">Smartphone / Laptop</text>
+  <rect x="55" y="128" width="170" height="74" rx="6" fill="#e0f2fe" stroke="#38bdf8"/>
+  <text x="140" y="150" font-size="10" font-weight="bold" text-anchor="middle" fill="#0369a1">&lt;&lt;Browser / PWA&gt;&gt;</text>
+  <text x="140" y="170" font-size="9" text-anchor="middle" fill="#0284c7">Next.js Client Bundle</text>
+  <text x="140" y="188" font-size="9" text-anchor="middle" fill="#0284c7">Service Worker &amp; LocalStorage</text>
+
+  <!-- Local Dev Boundary -->
+  <rect x="25" y="248" width="230" height="135" rx="10" fill="#fff7ed" stroke="#f97316" stroke-width="1.5" stroke-dasharray="4"/>
+  <text x="40" y="270" font-size="11.5" font-weight="bold" fill="#c2410c">&lt;&lt;Local Dev&gt;&gt; Docker Compose</text>
+  <rect x="42" y="284" width="196" height="86" rx="6" fill="#ffffff" stroke="#fdba74"/>
+  <text x="140" y="304" font-size="10" font-weight="bold" text-anchor="middle" fill="#9a3412">docker-compose.yml</text>
+  <text x="140" y="324" font-size="9" text-anchor="middle" fill="#7c2d12">Web (:3000) -&gt; API (:5000)</text>
+  <text x="140" y="342" font-size="9" text-anchor="middle" fill="#7c2d12">Postgres 16 (:5433 -&gt; :5432)</text>
+  <text x="140" y="360" font-size="9" text-anchor="middle" fill="#7c2d12">Local .env (gitignored)</text>
 
   <!-- CI/CD Boundary -->
-  <rect x="30" y="320" width="220" height="320" rx="10" fill="#fdf4ff" stroke="#d946ef" stroke-width="1.5" stroke-dasharray="4"/>
-  <text x="45" y="345" font-size="12" font-weight="bold" fill="#86198f">&lt;&lt;CI/CD&gt;&gt; GitHub Actions</text>
-  <text x="45" y="360" font-size="9" fill="#701a75">(thanhkhoa087/brewlite)</text>
-  <rect x="50" y="370" width="180" height="120" rx="6" fill="#ffffff" stroke="#f0abfc"/>
-  <text x="140" y="395" font-size="10" font-weight="bold" text-anchor="middle" fill="#701a75">Pipeline Quality Gate</text>
-  <text x="140" y="415" font-size="9" text-anchor="middle" fill="#4a044e">1. npm ci (Dependencies)</text>
-  <text x="140" y="435" font-size="9" text-anchor="middle" fill="#4a044e">2. ESLint &amp; Prettier</text>
-  <text x="140" y="455" font-size="9" text-anchor="middle" fill="#4a044e">3. Jest Unit/Integration Test</text>
-  <text x="140" y="475" font-size="9" text-anchor="middle" fill="#4a044e">4. Multi-stage Docker Build</text>
+  <rect x="25" y="400" width="230" height="295" rx="10" fill="#fdf4ff" stroke="#d946ef" stroke-width="1.5" stroke-dasharray="4"/>
+  <text x="40" y="424" font-size="12" font-weight="bold" fill="#86198f">&lt;&lt;CI/CD&gt;&gt; GitHub Actions</text>
+  <text x="40" y="440" font-size="9.5" font-weight="bold" fill="#701a75">(thanhkhoa087/brewlite-1)</text>
+  <rect x="42" y="452" width="196" height="122" rx="6" fill="#ffffff" stroke="#f0abfc"/>
+  <text x="140" y="472" font-size="10" font-weight="bold" text-anchor="middle" fill="#701a75">CI Quality Gate (ci.yml)</text>
+  <text x="140" y="492" font-size="9" text-anchor="middle" fill="#4a044e">1. npm ci &amp; Prisma Generate</text>
+  <text x="140" y="510" font-size="9" text-anchor="middle" fill="#4a044e">2. ESLint (API &amp; Web)</text>
+  <text x="140" y="528" font-size="9" text-anchor="middle" fill="#4a044e">3. Unit, Integration &amp; E2E Tests</text>
+  <text x="140" y="546" font-size="9" text-anchor="middle" fill="#4a044e">4. Production Build Check</text>
 
-  <rect x="50" y="505" width="180" height="115" rx="6" fill="#ffffff" stroke="#f0abfc"/>
-  <text x="140" y="528" font-size="10" font-weight="bold" text-anchor="middle" fill="#701a75">Registry &amp; CD Trigger</text>
-  <text x="140" y="550" font-size="9" text-anchor="middle" fill="#4a044e">ghcr.io/brewlite-api</text>
-  <text x="140" y="570" font-size="9" text-anchor="middle" fill="#4a044e">ghcr.io/brewlite-web</text>
-  <text x="140" y="595" font-size="9" text-anchor="middle" fill="#15803d">Smoke Test: GET /api/health</text>
+  <rect x="42" y="584" width="196" height="98" rx="6" fill="#ffffff" stroke="#f0abfc"/>
+  <text x="140" y="604" font-size="10" font-weight="bold" text-anchor="middle" fill="#701a75">CD Pipeline (cd.yml)</text>
+  <text x="140" y="624" font-size="9" text-anchor="middle" fill="#4a044e">ghcr.io/.../brewlite-api &amp; web</text>
+  <text x="140" y="642" font-size="9" text-anchor="middle" fill="#4a044e">Prisma Migrate + Deploy Hook</text>
+  <text x="140" y="662" font-size="9" text-anchor="middle" fill="#15803d">Smoke Test: GET /health + Rollback</text>
 
   <!-- Production Cloud Platform -->
-  <rect x="300" y="55" width="600" height="585" rx="12" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.8"/>
-  <text x="325" y="82" font-size="13" font-weight="bold" fill="#15803d">&lt;&lt;Production Cloud Platform&gt;&gt; (Vercel &amp; Render PaaS)</text>
+  <rect x="305" y="55" width="630" height="640" rx="12" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.8"/>
+  <text x="330" y="82" font-size="13" font-weight="bold" fill="#15803d">&lt;&lt;Production Cloud Platform&gt;&gt; (Vercel &amp; Render PaaS)</text>
 
   <!-- Frontend Container on Vercel -->
-  <rect x="330" y="110" width="260" height="260" rx="8" fill="#ffffff" stroke="#38bdf8" stroke-width="1.5"/>
-  <text x="460" y="135" font-size="11" font-weight="bold" text-anchor="middle" fill="#0284c7">&lt;&lt;Frontend Node&gt;&gt; Vercel Edge</text>
-  <text x="460" y="155" font-size="10" font-weight="bold" text-anchor="middle" fill="#0369a1">brewlite-web.vercel.app</text>
-  <line x1="330" y1="168" x2="590" y2="168" stroke="#e0f2fe"/>
-  <rect x="350" y="180" width="220" height="170" rx="6" fill="#f0f9ff" stroke="#bae6fd"/>
-  <text x="460" y="205" font-size="10" font-weight="bold" text-anchor="middle" fill="#0369a1">Next.js Web Service (PWA)</text>
-  <text x="460" y="230" font-size="9" text-anchor="middle" fill="#0c4a6e">Edge Network • Port 443 (HTTPS)</text>
-  <text x="460" y="255" font-size="9" text-anchor="middle" fill="#0c4a6e">SSL/TLS 1.3 Termination</text>
-  <text x="460" y="280" font-size="9" text-anchor="middle" fill="#0c4a6e">Env: NEXT_PUBLIC_API_URL</text>
-  <text x="460" y="305" font-size="9" text-anchor="middle" fill="#0c4a6e">SSR &amp; Client Hydration</text>
+  <rect x="330" y="110" width="270" height="270" rx="8" fill="#ffffff" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="465" y="135" font-size="11" font-weight="bold" text-anchor="middle" fill="#0284c7">&lt;&lt;Frontend Node&gt;&gt; Vercel Edge</text>
+  <text x="465" y="155" font-size="10" font-weight="bold" text-anchor="middle" fill="#0369a1">brewlite-web.vercel.app</text>
+  <line x1="330" y1="168" x2="600" y2="168" stroke="#e0f2fe"/>
+  <rect x="350" y="180" width="230" height="180" rx="6" fill="#f0f9ff" stroke="#bae6fd"/>
+  <text x="465" y="205" font-size="10" font-weight="bold" text-anchor="middle" fill="#0369a1">Next.js Web Service (PWA)</text>
+  <text x="465" y="232" font-size="9" text-anchor="middle" fill="#0c4a6e">Edge Network • Port 443 (HTTPS)</text>
+  <text x="465" y="257" font-size="9" text-anchor="middle" fill="#0c4a6e">SSL/TLS 1.3 Termination</text>
+  <text x="465" y="282" font-size="9" text-anchor="middle" fill="#0c4a6e">Env: NEXT_PUBLIC_API_URL</text>
+  <text x="465" y="307" font-size="9" text-anchor="middle" fill="#0c4a6e">SSR &amp; Client Hydration</text>
 
   <!-- Backend Container on Render -->
-  <rect x="620" y="110" width="260" height="320" rx="8" fill="#ffffff" stroke="#22c55e" stroke-width="1.5"/>
-  <text x="750" y="135" font-size="11" font-weight="bold" text-anchor="middle" fill="#16a34a">&lt;&lt;Backend Node&gt;&gt; Render Web Service</text>
-  <text x="750" y="155" font-size="10" font-weight="bold" text-anchor="middle" fill="#15803d">api-brewlite.onrender.com</text>
-  <line x1="620" y1="168" x2="880" y2="168" stroke="#dcfce7"/>
-  <rect x="640" y="180" width="220" height="235" rx="6" fill="#f0fdf4" stroke="#bbf7d0"/>
-  <text x="750" y="205" font-size="10" font-weight="bold" text-anchor="middle" fill="#15803d">NestJS Core REST Engine</text>
-  <text x="750" y="228" font-size="9" text-anchor="middle" fill="#166534">Port 5000 (HTTPS/Express)</text>
-  <text x="750" y="250" font-size="9" text-anchor="middle" fill="#166534">GET /api/health (DB Check)</text>
-  <text x="750" y="272" font-size="9" text-anchor="middle" fill="#166534">JWT Guard &amp; DTO Validation</text>
-  <text x="750" y="295" font-size="9" text-anchor="middle" fill="#166534">Prisma Client ORM Engine</text>
-  <text x="750" y="325" font-size="9" font-weight="bold" text-anchor="middle" fill="#15803d">PostgreSQL Idempotency Check</text>
-  <text x="750" y="342" font-size="8.5" text-anchor="middle" fill="#166534">(Query Payment Table Directly)</text>
-  <text x="750" y="375" font-size="9" text-anchor="middle" fill="#166534">Secrets: JWT_SECRET, DB_URL</text>
+  <rect x="630" y="110" width="280" height="335" rx="8" fill="#ffffff" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="770" y="135" font-size="11" font-weight="bold" text-anchor="middle" fill="#16a34a">&lt;&lt;Backend Node&gt;&gt; Render Web Service</text>
+  <text x="770" y="155" font-size="10" font-weight="bold" text-anchor="middle" fill="#15803d">api-brewlite.onrender.com</text>
+  <line x1="630" y1="168" x2="910" y2="168" stroke="#dcfce7"/>
+  <rect x="650" y="180" width="240" height="250" rx="6" fill="#f0fdf4" stroke="#bbf7d0"/>
+  <text x="770" y="205" font-size="10" font-weight="bold" text-anchor="middle" fill="#15803d">NestJS Core REST Engine</text>
+  <text x="770" y="228" font-size="9" text-anchor="middle" fill="#166534">Port 5000 (HTTPS/Express)</text>
+  <text x="770" y="250" font-size="9" font-weight="bold" text-anchor="middle" fill="#166534">GET /health (DB Ping &amp; Uptime)</text>
+  <text x="770" y="272" font-size="9" text-anchor="middle" fill="#166534">JWT Guard &amp; DTO Validation</text>
+  <text x="770" y="295" font-size="9" text-anchor="middle" fill="#166534">Prisma Client ORM Engine</text>
+  <text x="770" y="325" font-size="9" font-weight="bold" text-anchor="middle" fill="#15803d">PostgreSQL Idempotency Check</text>
+  <text x="770" y="342" font-size="8.5" text-anchor="middle" fill="#166534">(Query Payment Table Directly)</text>
+  <text x="770" y="375" font-size="9" text-anchor="middle" fill="#166534">Secrets: JWT_SECRET, DATABASE_URL</text>
+  <text x="770" y="400" font-size="9" text-anchor="middle" fill="#166534">NestJS Logger -&gt; Cloud Logs</text>
 
   <!-- PostgreSQL Database Node -->
-  <rect x="420" y="460" width="300" height="150" rx="8" fill="#ffffff" stroke="#eab308" stroke-width="1.2"/>
-  <text x="570" y="485" font-size="11" font-weight="bold" text-anchor="middle" fill="#a16207">&lt;&lt;Database Cluster&gt;&gt; PostgreSQL 16</text>
-  <rect x="440" y="500" width="260" height="90" rx="6" fill="#fffbeb" stroke="#fde68a"/>
-  <text x="570" y="525" font-size="10" font-weight="bold" text-anchor="middle" fill="#854d0e">Port 5432 (Internal Private VPC)</text>
-  <text x="570" y="545" font-size="9" text-anchor="middle" fill="#713f12">Persistent Storage: 10GB SSD Volume</text>
-  <text x="570" y="565" font-size="9" text-anchor="middle" fill="#713f12">ACID Transactions &amp; Payment Table</text>
+  <rect x="395" y="495" width="320" height="165" rx="8" fill="#ffffff" stroke="#eab308" stroke-width="1.2"/>
+  <text x="555" y="522" font-size="11" font-weight="bold" text-anchor="middle" fill="#a16207">&lt;&lt;Database Cluster&gt;&gt; PostgreSQL 16</text>
+  <rect x="415" y="538" width="280" height="102" rx="6" fill="#fffbeb" stroke="#fde68a"/>
+  <text x="555" y="564" font-size="10" font-weight="bold" text-anchor="middle" fill="#854d0e">Port 5432 (Internal Private VPC)</text>
+  <text x="555" y="588" font-size="9" text-anchor="middle" fill="#713f12">Persistent Storage: 10GB SSD Volume</text>
+  <text x="555" y="612" font-size="9" text-anchor="middle" fill="#713f12">ACID Transactions &amp; Payment Table</text>
 
   <!-- External Mock Service -->
-  <rect x="740" y="460" width="130" height="150" rx="8" fill="#ffffff" stroke="#ec4899"/>
-  <text x="805" y="485" font-size="10" font-weight="bold" text-anchor="middle" fill="#be185d">&lt;&lt;External&gt;&gt;</text>
-  <text x="805" y="515" font-size="9" text-anchor="middle" fill="#9d174d">Mock Payment</text>
-  <text x="805" y="535" font-size="9" text-anchor="middle" fill="#9d174d">Gateway API</text>
-  <text x="805" y="565" font-size="9" text-anchor="middle" fill="#9d174d">(MoMo / Napas)</text>
+  <rect x="745" y="495" width="165" height="165" rx="8" fill="#ffffff" stroke="#ec4899"/>
+  <text x="827" y="522" font-size="10" font-weight="bold" text-anchor="middle" fill="#be185d">&lt;&lt;External Service&gt;&gt;</text>
+  <text x="827" y="558" font-size="9.5" text-anchor="middle" fill="#9d174d">Mock Payment</text>
+  <text x="827" y="580" font-size="9.5" text-anchor="middle" fill="#9d174d">Gateway API</text>
+  <text x="827" y="612" font-size="9" text-anchor="middle" fill="#9d174d">(MoMo / VNPAY / Card)</text>
 
   <!-- Arrows -->
-  <line x1="250" y1="160" x2="330" y2="160" stroke="#1e293b" stroke-width="1.5" marker-end="url(#dep-arrow)"/>
-  <text x="290" y="152" font-size="9" font-weight="bold" text-anchor="middle">HTTPS 443</text>
+  <line x1="255" y1="150" x2="330" y2="150" stroke="#1e293b" stroke-width="1.5" marker-end="url(#dep-arrow)"/>
+  <text x="292" y="142" font-size="9" font-weight="bold" text-anchor="middle">HTTPS 443</text>
 
-  <line x1="590" y1="230" x2="620" y2="230" stroke="#1e293b" stroke-width="1.5" marker-end="url(#dep-arrow)"/>
-  <text x="605" y="222" font-size="8" text-anchor="middle">API</text>
+  <line x1="140" y1="383" x2="140" y2="400" stroke="#f97316" stroke-width="1.5" marker-end="url(#dep-arrow)"/>
 
-  <line x1="745" y1="430" x2="670" y2="460" stroke="#16a34a" stroke-width="1.5" marker-end="url(#dep-arrow)"/>
-  <text x="730" y="445" font-size="8" fill="#15803d">TCP Pool</text>
+  <line x1="600" y1="230" x2="630" y2="230" stroke="#1e293b" stroke-width="1.5" marker-end="url(#dep-arrow)"/>
+  <text x="615" y="222" font-size="8" text-anchor="middle">API</text>
 
-  <line x1="820" y1="430" x2="820" y2="460" stroke="#be185d" stroke-width="1.5" marker-end="url(#dep-arrow)"/>
+  <line x1="745" y1="445" x2="660" y2="495" stroke="#16a34a" stroke-width="1.5" marker-end="url(#dep-arrow)"/>
+  <text x="725" y="472" font-size="8.5" fill="#15803d">TCP :5432</text>
+
+  <line x1="827" y1="445" x2="827" y2="495" stroke="#be185d" stroke-width="1.5" marker-end="url(#dep-arrow)"/>
 
   <!-- CI to Prod Deploy -->
-  <line x1="250" y1="560" x2="330" y2="350" stroke="#d946ef" stroke-width="1.5" stroke-dasharray="3" marker-end="url(#dep-arrow)"/>
-  <text x="290" y="480" font-size="8" fill="#c026d3" font-weight="bold">CD Deploy Hook</text>
+  <line x1="255" y1="620" x2="305" y2="620" stroke="#d946ef" stroke-width="1.5" stroke-dasharray="3" marker-end="url(#dep-arrow)"/>
+  <text x="280" y="612" font-size="8" fill="#c026d3" font-weight="bold" text-anchor="middle">CD Hook</text>
 </svg>'''
     save_to_all("deployment-diagram.svg", svg)
     print("Generated deployment-diagram.svg")
+
+def generate_usecase_svgs():
+    overview_svg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 560" width="100%" height="100%" style="background:#ffffff; font-family:'Segoe UI', Arial, sans-serif;">
+  <text x="440" y="30" font-size="17" font-weight="bold" text-anchor="middle" fill="#0f172a">SƠ ĐỒ USE-CASE TỔNG QUÁT HỆ THỐNG BREWLITE</text>
+  <rect x="210" y="52" width="460" height="480" rx="10" fill="#f8fafc" stroke="#475569" stroke-width="1.8"/>
+  <text x="440" y="76" font-size="13" font-weight="bold" text-anchor="middle" fill="#1e293b">Hệ Thống BrewLite</text>
+  <circle cx="95" cy="150" r="16" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>
+  <line x1="95" y1="166" x2="95" y2="206" stroke="#0284c7" stroke-width="2"/>
+  <line x1="75" y1="182" x2="115" y2="182" stroke="#0284c7" stroke-width="2"/>
+  <line x1="95" y1="206" x2="78" y2="230" stroke="#0284c7" stroke-width="2"/>
+  <line x1="95" y1="206" x2="112" y2="230" stroke="#0284c7" stroke-width="2"/>
+  <text x="95" y="250" font-size="11" font-weight="bold" text-anchor="middle" fill="#0369a1">Khách hàng</text>
+  <text x="95" y="265" font-size="9.5" text-anchor="middle" fill="#64748b">(Customer)</text>
+
+  <circle cx="95" cy="355" r="14" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <line x1="95" y1="369" x2="95" y2="402" stroke="#16a34a" stroke-width="2"/>
+  <line x1="78" y1="382" x2="112" y2="382" stroke="#16a34a" stroke-width="2"/>
+  <line x1="95" y1="402" x2="80" y2="422" stroke="#16a34a" stroke-width="2"/>
+  <line x1="95" y1="402" x2="110" y2="422" stroke="#16a34a" stroke-width="2"/>
+  <text x="95" y="440" font-size="11" font-weight="bold" text-anchor="middle" fill="#15803d">Nhân viên quầy</text>
+
+  <circle cx="785" cy="220" r="15" fill="#fce7f3" stroke="#db2777" stroke-width="2"/>
+  <line x1="785" y1="235" x2="785" y2="270" stroke="#db2777" stroke-width="2"/>
+  <line x1="767" y1="248" x2="803" y2="248" stroke="#db2777" stroke-width="2"/>
+  <line x1="785" y1="270" x2="770" y2="292" stroke="#db2777" stroke-width="2"/>
+  <line x1="785" y1="270" x2="800" y2="292" stroke="#db2777" stroke-width="2"/>
+  <text x="785" y="310" font-size="11" font-weight="bold" text-anchor="middle" fill="#9d174d">Payment Gateway</text>
+
+  <circle cx="785" cy="410" r="14" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <line x1="785" y1="424" x2="785" y2="456" stroke="#d97706" stroke-width="2"/>
+  <line x1="768" y1="436" x2="802" y2="436" stroke="#d97706" stroke-width="2"/>
+  <line x1="785" y1="456" x2="770" y2="476" stroke="#d97706" stroke-width="2"/>
+  <line x1="785" y1="456" x2="800" y2="476" stroke="#d97706" stroke-width="2"/>
+  <text x="785" y="495" font-size="11" font-weight="bold" text-anchor="middle" fill="#92400e">Quản lý cửa hàng</text>
+
+  <ellipse cx="355" cy="115" rx="118" ry="22" fill="#ffffff" stroke="#0284c7" stroke-width="1.5"/>
+  <text x="355" y="119" font-size="10.5" text-anchor="middle" fill="#0f172a">UC01: Xem menu &amp; danh mục</text>
+  <ellipse cx="355" cy="170" rx="118" ry="22" fill="#ffffff" stroke="#0284c7" stroke-width="1.5"/>
+  <text x="355" y="174" font-size="10.5" text-anchor="middle" fill="#0f172a">UC02: Tùy biến món &amp; Giỏ hàng</text>
+  <ellipse cx="355" cy="225" rx="118" ry="22" fill="#ffffff" stroke="#0284c7" stroke-width="1.5"/>
+  <text x="355" y="229" font-size="10.5" text-anchor="middle" fill="#0f172a">UC03: Đăng ký &amp; Đăng nhập (JWT)</text>
+  <ellipse cx="355" cy="285" rx="122" ry="24" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="355" y="289" font-size="10.5" font-weight="bold" text-anchor="middle" fill="#92400e">UC04: Đặt &amp; thanh toán đơn hàng</text>
+  <ellipse cx="560" cy="225" rx="92" ry="20" fill="#fdf2f8" stroke="#db2777" stroke-width="1.5"/>
+  <text x="560" y="229" font-size="10" text-anchor="middle" fill="#9d174d">UC09: Xử lý thanh toán</text>
+  <ellipse cx="560" cy="285" rx="92" ry="20" fill="#f3e8ff" stroke="#9333ea" stroke-width="1.5"/>
+  <text x="560" y="289" font-size="10" text-anchor="middle" fill="#6b21a8">UC10: Áp dụng khuyến mãi</text>
+  <ellipse cx="355" cy="345" rx="118" ry="22" fill="#ffffff" stroke="#0284c7" stroke-width="1.5"/>
+  <text x="355" y="349" font-size="10.5" text-anchor="middle" fill="#0f172a">UC05: Theo dõi trạng thái đơn</text>
+  <ellipse cx="355" cy="400" rx="118" ry="22" fill="#ffffff" stroke="#0284c7" stroke-width="1.5"/>
+  <text x="355" y="404" font-size="10.5" text-anchor="middle" fill="#0f172a">UC06: Xem lịch sử đơn hàng</text>
+  <ellipse cx="355" cy="455" rx="118" ry="22" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="355" y="459" font-size="10.5" text-anchor="middle" fill="#15803d">UC07: Cập nhật tiến độ pha chế</text>
+  <ellipse cx="545" cy="455" rx="105" ry="22" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+  <text x="545" y="459" font-size="10.5" text-anchor="middle" fill="#92400e">UC08: Quản lý menu &amp; Báo cáo</text>
+
+  <line x1="120" y1="185" x2="237" y2="115" stroke="#334155" stroke-width="1.2"/>
+  <line x1="120" y1="185" x2="237" y2="170" stroke="#334155" stroke-width="1.2"/>
+  <line x1="120" y1="190" x2="237" y2="225" stroke="#334155" stroke-width="1.2"/>
+  <line x1="120" y1="195" x2="233" y2="285" stroke="#d97706" stroke-width="1.6"/>
+  <line x1="120" y1="200" x2="237" y2="345" stroke="#334155" stroke-width="1.2"/>
+  <line x1="120" y1="205" x2="237" y2="400" stroke="#334155" stroke-width="1.2"/>
+  <line x1="120" y1="395" x2="237" y2="455" stroke="#16a34a" stroke-width="1.3"/>
+  <line x1="765" y1="245" x2="652" y2="225" stroke="#db2777" stroke-width="1.4"/>
+  <line x1="765" y1="445" x2="650" y2="455" stroke="#d97706" stroke-width="1.4"/>
+  <line x1="468" y1="272" x2="515" y2="243" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4"/>
+  <line x1="477" y1="285" x2="468" y2="285" stroke="#64748b" stroke-width="1.2" stroke-dasharray="4"/>
+</svg>'''
+
+    checkout_svg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 440" width="100%" height="100%" style="background:#ffffff; font-family:'Segoe UI', Arial, sans-serif;">
+  <text x="430" y="30" font-size="17" font-weight="bold" text-anchor="middle" fill="#0f172a">SƠ ĐỒ USE-CASE TRỌNG TÂM: ĐẶT VÀ THANH TOÁN ĐƠN HÀNG (UC04)</text>
+  <rect x="190" y="52" width="480" height="360" rx="10" fill="#f8fafc" stroke="#475569" stroke-width="1.8"/>
+  <text x="430" y="74" font-size="12.5" font-weight="bold" text-anchor="middle" fill="#1e293b">Phạm vi Checkout &amp; Idempotent Payment</text>
+  <text x="95" y="210" font-size="12" font-weight="bold" text-anchor="middle" fill="#0369a1">Khách hàng</text>
+  <text x="765" y="265" font-size="11" font-weight="bold" text-anchor="middle" fill="#9d174d">Mock Payment</text>
+  <ellipse cx="310" cy="150" rx="96" ry="24" fill="#dbeafe" stroke="#2563eb" stroke-width="1.6"/>
+  <text x="310" y="154" font-size="10.5" font-weight="bold" text-anchor="middle" fill="#1e40af">Tạo đơn hàng (PENDING)</text>
+  <ellipse cx="310" cy="285" rx="96" ry="24" fill="#fce7f3" stroke="#db2777" stroke-width="1.6"/>
+  <text x="310" y="289" font-size="10.5" font-weight="bold" text-anchor="middle" fill="#9d174d">Xử lý thanh toán (Mock)</text>
+  <ellipse cx="550" cy="105" rx="92" ry="18" fill="#ffffff" stroke="#64748b"/>
+  <text x="550" y="109" font-size="10" text-anchor="middle">Xác thực phiên (JWT)</text>
+  <ellipse cx="550" cy="155" rx="92" ry="18" fill="#ffffff" stroke="#64748b"/>
+  <text x="550" y="159" font-size="10" text-anchor="middle">Kiểm tra &amp; trừ tồn kho</text>
+  <ellipse cx="550" cy="230" rx="96" ry="18" fill="#ffffff" stroke="#db2777"/>
+  <text x="550" y="234" font-size="10" text-anchor="middle">Kiểm tra Idempotency Key</text>
+  <ellipse cx="550" cy="285" rx="96" ry="18" fill="#f0fdf4" stroke="#16a34a"/>
+  <text x="550" y="289" font-size="10" text-anchor="middle" fill="#15803d">Cập nhật đơn PAID</text>
+  <ellipse cx="550" cy="345" rx="96" ry="18" fill="#fef2f2" stroke="#ef4444"/>
+  <text x="550" y="349" font-size="10" text-anchor="middle" fill="#b91c1c">Hủy đơn &amp; Hoàn tồn kho</text>
+  <line x1="140" y1="200" x2="214" y2="150" stroke="#334155" stroke-width="1.5"/>
+  <line x1="140" y1="215" x2="214" y2="285" stroke="#334155" stroke-width="1.5"/>
+  <line x1="406" y1="285" x2="710" y2="265" stroke="#db2777" stroke-width="1.5"/>
+  <line x1="400" y1="138" x2="462" y2="110" stroke="#64748b" stroke-dasharray="4"/>
+  <line x1="406" y1="150" x2="458" y2="155" stroke="#64748b" stroke-dasharray="4"/>
+  <line x1="400" y1="272" x2="458" y2="234" stroke="#64748b" stroke-dasharray="4"/>
+  <line x1="406" y1="285" x2="454" y2="285" stroke="#16a34a" stroke-dasharray="4"/>
+  <line x1="400" y1="300" x2="458" y2="342" stroke="#ef4444" stroke-dasharray="4"/>
+</svg>'''
+
+    with open(os.path.join(DIAGRAMS_DIR, "usecase-overview.svg"), "w", encoding="utf-8") as f:
+        f.write(overview_svg)
+    with open(os.path.join(DIAGRAMS_DIR, "usecase-checkout.svg"), "w", encoding="utf-8") as f:
+        f.write(checkout_svg)
+    print("Generated usecase-overview.svg & usecase-checkout.svg")
 
 if __name__ == "__main__":
     generate_sequence_svg()
     generate_activity_svg()
     generate_class_svg()
     generate_deployment_svg()
+    generate_usecase_svgs()
     print("All vector diagrams generated successfully.")

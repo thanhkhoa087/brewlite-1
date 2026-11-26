@@ -1,4 +1,13 @@
-import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class OrderItemDto {
@@ -22,10 +31,16 @@ export class OrderItemDto {
   @IsOptional()
   toppings?: string[];
 
+  /**
+   * Optional client hint ONLY — server ALWAYS ignores this and computes price
+   * from Database product.basePrice + server size/topping catalog (anti price tampering).
+   */
   @IsNumber()
-  unitPrice: number;
+  @IsOptional()
+  unitPrice?: number;
 
-  @IsNumber()
+  @IsInt()
+  @Min(1, { message: 'Số lượng sản phẩm phải lớn hơn hoặc bằng 1' })
   quantity: number;
 }
 

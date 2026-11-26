@@ -64,7 +64,7 @@ export const api = {
     return data;
   },
 
-  async createOrder(items: CartItem[], token?: string, note?: string) {
+  async createOrder(items: CartItem[], token?: string, note?: string, promotionCode?: string) {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -84,6 +84,7 @@ export const api = {
         quantity: i.quantity,
       })),
       note,
+      promotionCode,
     };
 
     const res = await fetch(`${API_URL}/orders`, {
@@ -93,6 +94,21 @@ export const api = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Không thể tạo đơn hàng');
+    return data;
+  },
+
+  async getMyOrders(token?: string) {
+    const headers: Record<string, string> = {};
+    const effectiveToken = token || (typeof window !== 'undefined' ? localStorage.getItem('brewlite_token') : null);
+    if (effectiveToken) {
+      headers['Authorization'] = `Bearer ${effectiveToken}`;
+    }
+    const res = await fetch(`${API_URL}/orders/my-orders`, {
+      headers,
+      cache: 'no-store',
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Không thể tải lịch sử đơn hàng');
     return data;
   },
 
@@ -118,5 +134,20 @@ export const api = {
     const res = await fetch(`${API_URL}/orders/${orderId}`);
     if (!res.ok) throw new Error('Không tìm thấy thông tin đơn hàng');
     return res.json();
+  },
+
+  async cancelOrder(orderId: string, token?: string) {
+    const headers: Record<string, string> = {};
+    const effectiveToken = token || (typeof window !== 'undefined' ? localStorage.getItem('brewlite_token') : null);
+    if (effectiveToken) {
+      headers['Authorization'] = `Bearer ${effectiveToken}`;
+    }
+    const res = await fetch(`${API_URL}/orders/${orderId}/cancel`, {
+      method: 'PATCH',
+      headers,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Không thể hủy đơn hàng');
+    return data;
   },
 };

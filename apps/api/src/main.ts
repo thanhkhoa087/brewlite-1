@@ -29,7 +29,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 5000;
   await app.listen(port);
-  logger.log(`🚀 BrewLite API Server is running on: http://localhost:${port}/api`);
-  logger.log(`🩺 Health check available on: http://localhost:${port}/health`);
+  logger.log(`BrewLite API Server is running on: http://localhost:${port}/api`);
+  logger.log(`Health check available on: http://localhost:${port}/health`);
 }
 bootstrap();

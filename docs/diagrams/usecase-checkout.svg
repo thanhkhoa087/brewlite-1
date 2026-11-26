@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 440" width="100%" height="100%" style="background:#ffffff; font-family:'Segoe UI', Arial, sans-serif;">
+  <text x="430" y="30" font-size="17" font-weight="bold" text-anchor="middle" fill="#0f172a">SƠ ĐỒ USE-CASE TRỌNG TÂM: ĐẶT VÀ THANH TOÁN ĐƠN HÀNG (UC04)</text>
+  <rect x="190" y="52" width="480" height="360" rx="10" fill="#f8fafc" stroke="#475569" stroke-width="1.8"/>
+  <text x="430" y="74" font-size="12.5" font-weight="bold" text-anchor="middle" fill="#1e293b">Phạm vi Checkout &amp; Idempotent Payment</text>
+  <text x="95" y="210" font-size="12" font-weight="bold" text-anchor="middle" fill="#0369a1">Khách hàng</text>
+  <text x="765" y="265" font-size="11" font-weight="bold" text-anchor="middle" fill="#9d174d">Mock Payment</text>
+  <ellipse cx="310" cy="150" rx="96" ry="24" fill="#dbeafe" stroke="#2563eb" stroke-width="1.6"/>
+  <text x="310" y="154" font-size="10.5" font-weight="bold" text-anchor="middle" fill="#1e40af">Tạo đơn hàng (PENDING)</text>
+  <ellipse cx="310" cy="285" rx="96" ry="24" fill="#fce7f3" stroke="#db2777" stroke-width="1.6"/>
+  <text x="310" y="289" font-size="10.5" font-weight="bold" text-anchor="middle" fill="#9d174d">Xử lý thanh toán (Mock)</text>
+  <ellipse cx="550" cy="105" rx="92" ry="18" fill="#ffffff" stroke="#64748b"/>
+  <text x="550" y="109" font-size="10" text-anchor="middle">Xác thực phiên (JWT)</text>
+  <ellipse cx="550" cy="155" rx="92" ry="18" fill="#ffffff" stroke="#64748b"/>
+  <text x="550" y="159" font-size="10" text-anchor="middle">Kiểm tra &amp; trừ tồn kho</text>
+  <ellipse cx="550" cy="230" rx="96" ry="18" fill="#ffffff" stroke="#db2777"/>
+  <text x="550" y="234" font-size="10" text-anchor="middle">Kiểm tra Idempotency Key</text>
+  <ellipse cx="550" cy="285" rx="96" ry="18" fill="#f0fdf4" stroke="#16a34a"/>
+  <text x="550" y="289" font-size="10" text-anchor="middle" fill="#15803d">Cập nhật đơn PAID</text>
+  <ellipse cx="550" cy="345" rx="96" ry="18" fill="#fef2f2" stroke="#ef4444"/>
+  <text x="550" y="349" font-size="10" text-anchor="middle" fill="#b91c1c">Hủy đơn &amp; Hoàn tồn kho</text>
+  <line x1="140" y1="200" x2="214" y2="150" stroke="#334155" stroke-width="1.5"/>
+  <line x1="140" y1="215" x2="214" y2="285" stroke="#334155" stroke-width="1.5"/>
+  <line x1="406" y1="285" x2="710" y2="265" stroke="#db2777" stroke-width="1.5"/>
+  <line x1="400" y1="138" x2="462" y2="110" stroke="#64748b" stroke-dasharray="4"/>
+  <line x1="406" y1="150" x2="458" y2="155" stroke="#64748b" stroke-dasharray="4"/>
+  <line x1="400" y1="272" x2="458" y2="234" stroke="#64748b" stroke-dasharray="4"/>
+  <line x1="406" y1="285" x2="454" y2="285" stroke="#16a34a" stroke-dasharray="4"/>
+  <line x1="400" y1="300" x2="458" y2="342" stroke="#ef4444" stroke-dasharray="4"/>
+</svg>

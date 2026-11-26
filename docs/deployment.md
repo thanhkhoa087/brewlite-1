@@ -1,48 +1,51 @@
 # Tài Liệu Triển Khai Hệ Thống BrewLite (Deployment Guide)
 
+> **Repository GitHub:** `https://github.com/thanhkhoa087/brewlite-1`
+
 ## 1. Tổng quan Kiến trúc Môi trường Triển khai
-Hệ thống BrewLite được thiết kế để triển khai linh hoạt trên các nền tảng PaaS/Cloud hiện đại (chẳng hạn như **Render, Railway, Vercel, Supabase**) hoặc triển khai trên máy chủ cá nhân thông qua **Docker & Docker Compose**.
+Hệ thống BrewLite được thiết kế phân tách rõ ràng 3 vùng môi trường (**Local Dev**, **CI/CD**, và **Production Cloud PaaS**), triển khai trên **Vercel** (Frontend Next.js PWA), **Render** (Backend NestJS Docker container) và **Managed PostgreSQL** trong mạng riêng.
 
 ### 1.1. Bảng phân vùng môi trường
 
 | Thành phần | Môi trường Local Dev | Môi trường CI (GitHub Actions) | Môi trường Production (Cloud PaaS) |
 | :--- | :--- | :--- | :--- |
-| **Frontend Web** | Next.js Dev Server (`localhost:3000`) | Headless Build & Lint Test | Cloudflare / Vercel Edge / PaaS Container |
-| **Backend API** | NestJS Dev Server (`localhost:5000`) | In-memory Mock Test / Jest | Render Web Service (`https://api-brewlite.onrender.com`) |
-| **Cơ sở dữ liệu** | PostgreSQL 16 (Docker Compose) | PostgreSQL Service Container | Managed PostgreSQL (Supabase / Render DB) |
+| **Frontend Web** | Next.js Dev/Docker (`localhost:3000`) | Lint, Unit Test & Next.js Build | Vercel Edge (`https://brewlite-web.vercel.app`) |
+| **Backend API** | NestJS Dev/Docker (`localhost:5000`) | Lint, Unit, Integration & E2E Test | Render Web Service (`https://api-brewlite.onrender.com/api`) |
+| **Health Check** | `http://localhost:5000/health` | Integration & E2E Assertion | `https://api-brewlite.onrender.com/health` |
+| **Cơ sở dữ liệu** | PostgreSQL 16 (`localhost:5433 -> 5432`) | PostgreSQL 16 Service Container | Managed PostgreSQL 16 (Private VPC, không public) |
 | **Giao thức** | HTTP (`http://localhost:*`) | Internal Loopback | HTTPS / TLS 1.3 (Port 443) |
-| **Bảo mật Secrets** | File `.env` cục bộ | GitHub Actions Secrets | PaaS Environment Variables Dashboard |
+| **Bảo mật Secrets** | File `.env` cục bộ (`.gitignore`) | GitHub Actions Secrets | PaaS Environment Variables Dashboard |
 
 ---
 
 ## 2. Thiết lập Biến môi trường (Environment Variables)
 
-### 2.1. Backend (`apps/api/.env`)
+### 2.1. Backend (`apps/api/.env` - không commit lên Git)
 ```bash
-# Cấu hình máy chủ
 NODE_ENV=production
 PORT=5000
 API_PREFIX=api
 
-# Kết nối cơ sở dữ liệu PostgreSQL
-DATABASE_URL="postgresql://brewlite_user:SecurePass2026@dpg-xxxx.render.com:5432/brewlite_prod?sslmode=require"
+# Kết nối cơ sở dữ liệu PostgreSQL (Internal VPC URL)
+DATABASE_URL="postgresql://<user>:<password>@<internal-host>:5432/brewlite_prod?sslmode=require"
 
-# Khóa bí mật JWT
-JWT_SECRET="brewlite_jwt_super_secret_key_2026_production"
+# Khóa bí mật JWT (đặt trong GitHub Secrets / PaaS Dashboard)
+JWT_SECRET="<strong-random-32+-char-secret>"
 JWT_EXPIRES_IN="7d"
-
-# Cổng thanh toán mô phỏng
-MOCK_PAYMENT_LATENCY_MS=400
-IDEMPOTENCY_TTL_SECONDS=86400
 ```
 
 ### 2.2. Frontend (`apps/web/.env.production`)
 ```bash
-# Đường dẫn API Backend
 NEXT_PUBLIC_API_URL="https://api-brewlite.onrender.com/api"
 NEXT_PUBLIC_APP_NAME="BrewLite"
-NEXT_PUBLIC_ENABLE_PWA="true"
 ```
+
+### 2.3. GitHub Actions Secrets cần cấu hình cho CD (`.github/workflows/cd.yml`)
+- `PROD_DATABASE_URL`: Chuỗi kết nối PostgreSQL Production để chạy `npx prisma migrate deploy`.
+- `PROD_DEPLOY_HOOK`: Render Deploy Hook URL để kích hoạt triển khai Backend.
+- `VERCEL_DEPLOY_HOOK`: Vercel Deploy Hook URL để kích hoạt triển khai Frontend (tùy chọn).
+- `PROD_API_URL`: URL gốc của Backend API Production (mặc định `https://api-brewlite.onrender.com`).
+- `PROD_ROLLBACK_HOOK`: Webhook hoàn nguyên bản triển khai ổn định trước đó khi Smoke Test thất bại.
 
 ---
 
@@ -52,25 +55,32 @@ NEXT_PUBLIC_ENABLE_PWA="true"
 ```json
 {
   "status": "ok",
+  "timestamp": "2026-10-31T11:55:00.000Z",
+  "uptime": 12845.32,
   "info": {
     "database": {
       "status": "up"
     },
-    "uptime": 12845.32,
-    "timestamp": "2026-10-31T11:55:00.000Z"
+    "service": "brewlite-api",
+    "version": "1.0.0"
   }
 }
 ```
-- Nếu cơ sở dữ liệu ngắt kết nối, endpoint trả về mã `503 Service Unavailable`, báo hiệu cho Load Balancer hoặc Docker Swarm kích hoạt khởi động lại container hoặc kích hoạt kịch bản Rollback.
 
 ---
 
 ## 4. Quy trình Rollback khi Triển khai Thất bại (Rollback Procedure)
-1. **Phát hiện lỗi:** Sau khi CD đẩy phiên bản mới, bước `Smoke Test` kiểm tra `GET /health` 3 lần liên tiếp. Nếu trả về mã lỗi $\ge 500$, pipeline lập tức kích hoạt trạng thái **FAILURE**.
-2. **Kích hoạt Rollback tự động:**
-   - Script CD sử dụng GitHub CLI / PaaS Deploy Hook để rollback lại commit SHA hoặc Docker Image tag ổn định liền trước đó (`brewlite-api:latest-stable`).
-   - Lệnh kích hoạt rollback thông qua CLI:
-     ```bash
-     docker compose -f docker-compose.prod.yml rollback
-     ```
-3. **An toàn dữ liệu:** Do các migration database được thiết kế theo hướng tương thích ngược (Backward-compatible schema additions), việc rollback container ứng dụng không làm hỏng dữ liệu hiện hữu.
+1. **Phát hiện lỗi tự động:** Sau khi pipeline CD triển khai phiên bản mới, job `smoke-test` gọi `GET /health` tối đa 5 lần liên tiếp (mỗi lần cách nhau 10 giây). Nếu không nhận được HTTP `200 OK`, job chuyển sang trạng thái **FAILURE** và kích hoạt bước rollback.
+2. **Rollback trên Cloud PaaS (Render / Vercel):**
+   - **Tự động:** Gọi `PROD_ROLLBACK_HOOK` trong bước `Trigger Rollback on Failure` của `.github/workflows/cd.yml`.
+   - **Thủ công trên Render Dashboard:** Vào **Events / Deploys** → chọn bản deploy ổn định liền trước (ví dụ tag `v1.0.0`) → nhấn **Rollback to this deploy**.
+3. **Rollback bằng Docker Image Tag (GHCR / VPS):**
+   ```bash
+   # Pull lại image bản ổn định trước đó từ GitHub Container Registry
+   docker pull ghcr.io/thanhkhoa087/brewlite-1/brewlite-api:<previous-tag>
+   docker pull ghcr.io/thanhkhoa087/brewlite-1/brewlite-web:<previous-tag>
+
+   # Khởi động lại dịch vụ với tag ổn định
+   docker compose up -d --no-build
+   ```
+4. **An toàn dữ liệu (Backward-compatible Migrations):** Mọi Prisma migration trong `apps/api/prisma/migrations/` được thiết kế chỉ bổ sung schema tương thích ngược, đảm bảo việc rollback container ứng dụng không gây mất dữ liệu giao dịch.

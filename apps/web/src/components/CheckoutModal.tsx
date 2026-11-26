@@ -50,7 +50,7 @@ export function CheckoutModal({
 
     try {
       // 1. Create Order (POST /orders)
-      const order = await api.createOrder(items, token || undefined, note);
+      const order = await api.createOrder(items, token || undefined, note, promoCode);
 
       // 2. Generate Client Idempotency Key (UUIDv4 simulation)
       const idempotencyKey = `idem_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;

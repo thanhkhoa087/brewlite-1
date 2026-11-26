@@ -1,0 +1,9 @@
+{
+  "name": "brewlite-e2e-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BrewLite End-to-End (E2E) Test Suite",
+  "scripts": {
+    "test": "node ./run-e2e.js"
+  }
+}

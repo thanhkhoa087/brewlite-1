@@ -1,0 +1,30 @@
+@startuml usecase-checkout
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Khách hàng" as Customer
+actor "Dịch vụ thanh toán" as PaymentService
+
+rectangle "Phạm vi Checkout & Payment (UC04)" {
+  usecase "Xem lại giỏ hàng" as UC_ReviewCart
+  usecase "Xác thực phiên (JWT)" as UC_Auth
+  usecase "Tạo đơn hàng (PENDING)" as UC_CreateOrder
+  usecase "Kiểm tra & trừ tồn kho" as UC_StockCheck
+  usecase "Xử lý thanh toán (Mock)" as UC_ProcessPay
+  usecase "Ghi nhận Idempotency Key" as UC_Idempotency
+  usecase "Cập nhật đơn thành PAID" as UC_UpdatePaid
+  usecase "Hủy đơn & Hoàn tồn kho" as UC_CancelOrder
+
+  UC_CreateOrder ..> UC_ReviewCart : <<include>>
+  UC_CreateOrder ..> UC_Auth : <<include>>
+  UC_CreateOrder ..> UC_StockCheck : <<include>>
+
+  UC_ProcessPay ..> UC_Idempotency : <<include>>
+  UC_ProcessPay ..> UC_UpdatePaid : <<extend>>
+  UC_ProcessPay ..> UC_CancelOrder : <<extend>>
+}
+
+Customer --> UC_CreateOrder
+Customer --> UC_ProcessPay
+PaymentService <-- UC_ProcessPay
+@enduml

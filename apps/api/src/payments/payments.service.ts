@@ -5,7 +5,7 @@ import { ProcessPaymentDto } from './dto/process-payment.dto';
 
 @Injectable()
 export class PaymentsService {
-  // In-memory idempotency cache (Map<idempotencyKey, responsePayload>)
+  // In-memory idempotency cache fallback (used when DB is offline/mocked)
   private idempotencyStore = new Map<string, any>();
 
   constructor(
@@ -14,14 +14,41 @@ export class PaymentsService {
   ) {}
 
   async processPayment(dto: ProcessPaymentDto, idempotencyKey?: string) {
-    // 1. Idempotency Check (NFR-06)
-    if (idempotencyKey && this.idempotencyStore.has(idempotencyKey)) {
-      const cached = this.idempotencyStore.get(idempotencyKey);
-      return {
-        ...cached,
-        isIdempotentReplay: true,
-        message: 'Giao dịch đã được ghi nhận trước đó (Idempotent response)',
-      };
+    // 1. Idempotency Check in PostgreSQL Payment table first (NFR-06 & ADR-005)
+    if (idempotencyKey) {
+      try {
+        if (this.prisma.payment?.findUnique) {
+          const existingPayment = await this.prisma.payment.findUnique({
+            where: { idempotencyKey },
+            include: { order: true },
+          });
+          if (existingPayment && existingPayment.status === 'COMPLETED') {
+            return {
+              success: true,
+              orderId: existingPayment.orderId,
+              orderCode: existingPayment.order?.orderCode || 'BWL-LIVE',
+              status: 'PAID',
+              amount: existingPayment.amount,
+              method: existingPayment.method,
+              transactionCode: existingPayment.transactionCode,
+              paidAt: existingPayment.paidAt?.toISOString() || existingPayment.createdAt.toISOString(),
+              isIdempotentReplay: true,
+              message: 'Giao dịch đã được ghi nhận trước đó (Idempotent response)',
+            };
+          }
+        }
+      } catch {
+        // Fallback to in-memory cache check
+      }
+
+      if (this.idempotencyStore.has(idempotencyKey)) {
+        const cached = this.idempotencyStore.get(idempotencyKey);
+        return {
+          ...cached,
+          isIdempotentReplay: true,
+          message: 'Giao dịch đã được ghi nhận trước đó (Idempotent response)',
+        };
+      }
     }
 
     // 2. Fetch order
@@ -30,18 +57,47 @@ export class PaymentsService {
       throw new NotFoundException(`Không tìm thấy đơn hàng ${dto.orderId}`);
     }
 
+    if (order.status === 'CANCELLED') {
+      throw new BadRequestException('Đơn hàng đã bị hủy, vui lòng đặt lại đơn hàng mới');
+    }
+
     if (order.status === 'PAID') {
       return {
         success: true,
         orderId: order.id,
+        orderCode: order.orderCode || 'BWL-LIVE',
         status: 'PAID',
         message: 'Đơn hàng này đã được thanh toán hoàn tất',
       };
     }
 
-    // 3. Simulate payment processing
+    // Always charge the server-calculated order totalAmount (never trust client-tampered amount)
+    const chargeAmount = typeof order.totalAmount === 'number' ? order.totalAmount : dto.amount;
+
+    // 3. Simulate payment failure (Exception Flow E3)
     if (dto.simulateScenario === 'INSUFFICIENT_FUNDS') {
       await this.ordersService.updateStatus(order.id, 'CANCELLED');
+      if (this.ordersService.restoreStock) {
+        await this.ordersService.restoreStock(order.id);
+      }
+
+      try {
+        if (this.prisma.payment?.create) {
+          await this.prisma.payment.create({
+            data: {
+              orderId: order.id,
+              amount: chargeAmount,
+              method: dto.method as any,
+              status: 'FAILED',
+              transactionCode: `TX-FAIL-${Date.now()}`,
+              idempotencyKey: null,
+            },
+          });
+        }
+      } catch {
+        // Safe fallback when DB is mocked
+      }
+
       const failResponse = {
         success: false,
         orderId: order.id,
@@ -57,18 +113,20 @@ export class PaymentsService {
     await this.ordersService.updateStatus(order.id, 'PAID');
 
     try {
-      await this.prisma.payment.create({
-        data: {
-          orderId: order.id,
-          amount: dto.amount,
-          method: dto.method as any,
-          status: 'COMPLETED',
-          transactionCode,
-          idempotencyKey: idempotencyKey || null,
-          paidAt: new Date(),
-        },
-      });
-    } catch (e) {
+      if (this.prisma.payment?.create) {
+        await this.prisma.payment.create({
+          data: {
+            orderId: order.id,
+            amount: chargeAmount,
+            method: dto.method as any,
+            status: 'COMPLETED',
+            transactionCode,
+            idempotencyKey: idempotencyKey || null,
+            paidAt: new Date(),
+          },
+        });
+      }
+    } catch {
       // Prisma mock fallback
     }
 
@@ -77,7 +135,7 @@ export class PaymentsService {
       orderId: order.id,
       orderCode: order.orderCode || 'BWL-LIVE',
       status: 'PAID',
-      amount: dto.amount,
+      amount: chargeAmount,
       method: dto.method,
       transactionCode,
       paidAt: new Date().toISOString(),

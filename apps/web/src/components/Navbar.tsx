@@ -1,16 +1,17 @@
 'use client';
 
 import React from 'react';
-import { ShoppingBag, Coffee, User as UserIcon, LogOut } from 'lucide-react';
+import { ShoppingBag, Coffee, User as UserIcon, LogOut, Receipt } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
 interface NavbarProps {
   onOpenCart: () => void;
   onOpenAuth: () => void;
+  onOpenHistory?: () => void;
 }
 
-export function Navbar({ onOpenCart, onOpenAuth }: NavbarProps) {
+export function Navbar({ onOpenCart, onOpenAuth, onOpenHistory }: NavbarProps) {
   const { totalQuantity } = useCart();
   const { user, logout, isAuthenticated } = useAuth();
 
@@ -31,17 +32,28 @@ export function Navbar({ onOpenCart, onOpenAuth }: NavbarProps) {
         {/* Action Buttons */}
         <div className="flex items-center space-x-3">
           {isAuthenticated ? (
-            <div className="flex items-center space-x-2 bg-amber-50 py-1 px-2.5 rounded-full border border-amber-200">
-              <span className="text-xs font-semibold text-amber-900 max-w-[80px] truncate">
-                {user?.fullName || 'User'}
-              </span>
-              <button
-                onClick={logout}
-                className="text-stone-400 hover:text-red-600 transition-colors"
-                title="Đăng xuất"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
+            <div className="flex items-center space-x-1.5">
+              {onOpenHistory && (
+                <button
+                  onClick={onOpenHistory}
+                  className="p-2 text-stone-700 hover:text-amber-800 transition-colors rounded-full hover:bg-stone-100"
+                  title="Đơn hàng của tôi"
+                >
+                  <Receipt className="w-5 h-5" />
+                </button>
+              )}
+              <div className="flex items-center space-x-2 bg-amber-50 py-1 px-2.5 rounded-full border border-amber-200">
+                <span className="text-xs font-semibold text-amber-900 max-w-[80px] truncate">
+                  {user?.fullName || 'User'}
+                </span>
+                <button
+                  onClick={logout}
+                  className="text-stone-400 hover:text-red-600 transition-colors"
+                  title="Đăng xuất"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ) : (
             <button

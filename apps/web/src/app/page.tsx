@@ -9,6 +9,7 @@ import { ProductDetailModal } from '../components/ProductDetailModal';
 import { CartDrawer } from '../components/CartDrawer';
 import { CheckoutModal } from '../components/CheckoutModal';
 import { OrderTracker } from '../components/OrderTracker';
+import { OrderHistoryModal } from '../components/OrderHistoryModal';
 import { AuthModal } from '../components/AuthModal';
 import { Product, api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -28,6 +29,7 @@ export default function HomePage() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [activeOrder, setActiveOrder] = useState<any | null>(null);
   const [promoCode, setPromoCode] = useState<string | undefined>(undefined);
 
@@ -73,6 +75,7 @@ export default function HomePage() {
       <Navbar
         onOpenCart={() => setIsCartOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenHistory={() => setIsHistoryOpen(true)}
       />
 
       {/* 2. Banner Hero */}
@@ -198,6 +201,12 @@ export default function HomePage() {
           onClose={() => setActiveOrder(null)}
         />
       )}
+
+      <OrderHistoryModal
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        onSelectOrder={(order) => setActiveOrder(order)}
+      />
 
       <AuthModal
         isOpen={isAuthOpen}

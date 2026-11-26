@@ -1,133 +1,82 @@
-# BrewLite – Lite Order & Restaurant System
+# BrewLite – Assignment 2 (Requirements to Deployment)
 
-> **Môn học:** Công nghệ Phần mềm | **Học kỳ:** I – Năm học 2026–2027  
-> **Khoa Công nghệ Thông tin – Trường Đại học Sài Gòn (SGU)**  
-> **Ngăn xếp công nghệ:** Next.js (Mobile-first PWA), NestJS (Modular Monolith), PostgreSQL, Docker, GitHub Actions CI/CD.
+> **Môn học:** Công nghệ Phần mềm – Khoa CNTT, Trường ĐH Sài Gòn (HK I, 2026–2027)  
+> **Công nghệ:** Next.js (Mobile-first PWA) • NestJS • PostgreSQL + Prisma • Docker • GitHub Actions CI/CD
+
+Hệ thống đặt đồ uống tinh gọn theo luồng:  
+`Xem menu → Tùy biến (Size/Topping) → Giỏ hàng → Đặt đơn (BOM & Concurrency Lock) → Thanh toán (Idempotency) → Theo dõi / Hủy đơn`
+
+## Liên kết chính
+- **Repository:** https://github.com/thanhkhoa087/brewlite-1
+- **Frontend Production (HTTPS):** https://brewlite-web.vercel.app
+- **Backend API Production:** https://api-brewlite.onrender.com/api
+- **Health Check:** https://api-brewlite.onrender.com/health
 
 ---
 
-## 1. Tổng quan Dự án (Project Overview)
-**BrewLite** là hệ thống tinh gọn dành cho các chuỗi quán đồ uống (cà phê & trà sữa) giúp khách hàng dễ dàng xem menu, tùy biến thức uống, đặt hàng và thanh toán trực tuyến mô phỏng ngay trên trình duyệt di động hoặc cài đặt PWA mà không cần tải ứng dụng từ Store.
-
-### Luồng nghiệp vụ cốt lõi:
-$$\text{Xem menu} \longrightarrow \text{Chọn tùy chọn (Size/Topping)} \longrightarrow \text{Giỏ hàng} \longrightarrow \text{Đặt đơn} \longrightarrow \text{Thanh toán (Idempotency)} \longrightarrow \text{Theo dõi đơn}$$
-
----
-
-## 2. Cấu trúc Thư mục Monorepo (Repository Structure)
+## Cấu trúc dự án
 
 ```text
 brewlite/
 ├── apps/
-│   ├── web/                     # Frontend Next.js mobile-first PWA
-│   └── api/                     # Backend NestJS RESTful API
+│   ├── web/                # Next.js PWA (src/, tests/, public/icons/, Dockerfile)
+│   └── api/                # NestJS API (auth, products/BOM, orders, payments, health, prisma/migrations/, test/, Dockerfile)
 ├── docs/
-│   ├── requirements/            # Task 1: Bối cảnh, SRS, Use-case checkout
-│   ├── diagrams/                # Task 2 & 3: Activity, Sequence, Class, Deployment PUML & SVG
-│   ├── architecture/            # Task 3: Tài liệu kiến trúc C4 & các bản ghi ADR
-│   │   └── adr/
-│   ├── traceability-matrix.md   # Phần 8: Ma trận truy vết yêu cầu (FR/NFR -> Code -> Test)
-│   ├── deployment.md            # Hướng dẫn chi tiết triển khai Production
-│   └── sprint-retro.md          # Đánh giá Sprint 1 & Sprint 2 Review / Retrospective
-├── tests/                       # Task 5: Kịch bản kiểm thử tích hợp và E2E
-│   └── e2e/
-├── .github/
-│   └── workflows/
-│       ├── ci.yml               # Task 4.4: Quality Gate CI Pipeline (Lint -> Test -> Build)
-│       └── cd.yml               # Task 5.3: Production CD Pipeline & Rollback
-├── docker-compose.yml           # Khởi chạy toàn bộ hệ thống Web, API, Postgres tại Local
-├── .env.example                 # Mẫu cấu hình biến môi trường
-└── README.md                    # Tài liệu hướng dẫn toàn diện
+│   ├── requirements/       # Task 1: Context & Scope, SRS, Use-Case Checkout
+│   ├── diagrams/           # Task 2 & 3: Use-Case, Activity, Sequence, Class, Deployment (.puml/.svg/.png)
+│   ├── architecture/       # Task 3: C4 Architecture & ADR (001–005)
+│   ├── postman/            # Postman Collection, Environments & hướng dẫn kiểm thử API
+│   ├── traceability-matrix.md
+│   ├── deployment.md
+│   └── sprint-retro.md
+├── tests/e2e/              # End-to-End HTTP test suite & Concurrency Demo Script
+├── .github/workflows/      # ci.yml (Quality Gate) & cd.yml (Docker Push, Deploy, Smoke Test, Rollback)
+├── docker-compose.yml
+└── .env.example
 ```
 
 ---
 
-## 3. Quy ước Phát triển (Development Workflow)
+## Khởi chạy nhanh (Local)
 
-### 3.1. Chiến lược Phân nhánh (Branching Strategy)
-- `main`: Nhánh production ổn định, luôn sẵn sàng phát hành. Chỉ nhận merge từ `develop` qua Pull Request được phê duyệt.
-- `develop`: Nhánh tích hợp chính cho toàn bộ các tính năng trong Sprint.
-- `feature/<tên-tính-năng>`: Nhánh làm việc của từng thành viên (ví dụ: `feature/order-idempotency`, `feature/cart-drawer`).
-
-### 3.2. Quy ước Commit (Conventional Commits)
-- `feat:` Thêm tính năng mới (ví dụ: `feat(api): implement mock payment with idempotency key`).
-- `fix:` Sửa lỗi (ví dụ: `fix(web): resolve mobile hydration mismatch`).
-- `docs:` Thay đổi tài liệu hoặc sơ đồ UML (ví dụ: `docs(diagrams): add sequence checkout diagram`).
-- `test:` Bổ sung hoặc sửa đổi kịch bản kiểm thử (ví dụ: `test(api): add integration test for order creation`).
-- `ci:` Thay đổi cấu hình pipeline GitHub Actions.
-
-### 3.3. Định nghĩa Hoàn thành (Definition of Done - DoD)
-Một User Story hoặc Task được xem là hoàn thành (Done) khi và chỉ khi:
-1. Mã nguồn tuân thủ coding standard, không có lỗi TypeScript compilation.
-2. 100% kịch bản Unit Test và Integration Test liên quan đều PASS.
-3. Pipeline CI trên GitHub Actions thực thi xanh (Green Checkmark).
-4. Đã cập nhật tài liệu ma trận truy vết (`traceability-matrix.md`) và đặc tả tương ứng.
-5. Code được review và phê duyệt (Approved) bởi ít nhất 1 thành viên trước khi merge.
-
----
-
-## 4. Hướng dẫn Cài đặt & Khởi chạy (Getting Started)
-
-### Cách 1: Khởi chạy nhanh bằng Docker Compose (Khuyến nghị)
-Yêu cầu: Đã cài đặt Docker và Docker Compose trên máy.
+### Cách 1: Docker Compose (1 lệnh)
 ```bash
-# 1. Sao chép biến môi trường
 cp .env.example .env
-
-# 2. Khởi động toàn bộ Web, API và PostgreSQL chỉ với 1 lệnh
 docker compose up --build -d
-
-# 3. Kiểm tra trạng thái các container
-docker compose ps
-
-# 4. Xem logs thời gian thực
-docker compose logs -f
 ```
-- Frontend Web PWA: `http://localhost:3000`
-- Backend API REST: `http://localhost:5000/api`
-- Health Check Endpoint: `http://localhost:5000/health`
+- Web PWA: `http://localhost:3000` | API: `http://localhost:5000/api` | Health: `http://localhost:5000/health`
 
-### Cách 2: Chạy trực tiếp trên máy phát triển (Local Node.js)
-Yêu cầu: Node.js v20+, PostgreSQL đang chạy tại cổng 5432.
+### Cách 2: Chạy trực tiếp bằng Node.js (v20+)
 ```bash
-# Cài đặt dependencies
-cd apps/api && npm install
-cd ../web && npm install
+# Backend (port 5000)
+cd apps/api && npm install && npx prisma generate && npx prisma migrate deploy && npm run seed && npm run start:dev
 
-# Thiết lập database & seed dữ liệu mẫu đồ uống
-cd ../api
-npx prisma migrate dev --name init
-npm run seed
-
-# Chạy Backend (cổng 5000)
-npm run start:dev
-
-# Mở terminal khác và chạy Frontend (cổng 3000)
-cd ../web
-npm run dev
+# Frontend (port 3000 - mở terminal mới)
+cd apps/web && npm install && npm run dev
 ```
 
 ---
 
-## 5. Kiểm thử & Quality Gate (Testing)
+## Kiểm thử (Lint, Unit, Integration, E2E & Postman)
 
 ```bash
-# 1. Chạy linter kiểm tra chuẩn mã nguồn
-cd apps/api && npm run lint
-cd ../web && npm run lint
+# Backend: Lint, Unit Test, Integration Test & Build
+cd apps/api && npm run lint && npm test && npm run test:integration && npm run build
 
-# 2. Chạy Unit Test backend
-cd apps/api && npm test
+# Frontend: Lint, Unit Test & Build
+cd apps/web && npm run lint && npm test && npm run build
 
-# 3. Chạy Integration Test cho đơn hàng và thanh toán
-cd apps/api && npm run test:integration
-
-# 4. Chạy End-to-End (E2E) Test luồng đặt món
-cd ../../tests/e2e && npm test
+# End-to-End (E2E) Test & Demo Concurrency (2 user đặt cùng 2 ly cuối)
+cd tests/e2e && npm test
+node tests/e2e/concurrency-demo.js http://localhost:5000/api
 ```
+
+**Kiểm thử Back-end bằng Postman:** Import 3 tệp trong [`docs/postman/`](docs/postman/README-POSTMAN.md) (đã có sẵn biến `base_url`, JSON payload và `pm.test` cho đăng ký/đăng nhập, BOM nguyên liệu, chống sửa giá, vượt tồn kho `409`, hủy đơn `PENDING → CANCELLED`, thanh toán & Idempotency replay).
 
 ---
 
-## 6. Hướng dẫn Triển khai & Rollback (Production & Rollback)
-- **Triển khai Production:** Được tự động hóa hoàn toàn thông qua file `.github/workflows/cd.yml`. Mỗi khi tag phiên bản (ví dụ: `git tag v1.0.0 && git push origin v1.0.0`), pipeline CD sẽ build Docker Image, kiểm tra Smoke test và cập nhật cloud service.
-- **Quy trình Rollback:** Nếu Health Check sau triển khai thất bại, pipeline CD tự động phát lệnh dừng và hoàn nguyên container image về tag ổn định liền kề (`latest-stable`) mà không làm gián đoạn dịch vụ.
+## Quy trình Git, CI/CD & Rollback
+- **Branching & Commit:** `main` (production), `develop` (tích hợp), `feature/<tên>`; quy ước Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `ci:`).
+- **CI (`.github/workflows/ci.yml`):** Tự động chạy `Install → Lint → Unit/Integration/E2E Test → Build` trên mọi PR/Push.
+- **CD (`.github/workflows/cd.yml`):** Push vào `main` hoặc tag `v*.*.*` sẽ chạy lại CI → build & push Docker image lên `ghcr.io` → `prisma migrate deploy` → trigger deploy → gọi **Smoke Test `GET /health`** 5 lần.
+- **Rollback:** Nếu Smoke Test thất bại, pipeline tự động dừng và gọi `PROD_ROLLBACK_HOOK` (hoặc khôi phục image tag ổn định liền trước từ `ghcr.io` / Render Dashboard). Xem chi tiết tại [`docs/deployment.md`](docs/deployment.md).

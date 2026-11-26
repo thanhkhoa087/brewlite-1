@@ -1,5 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  INITIAL_INGREDIENTS,
+  INITIAL_RECIPES,
+  calculateMaxSellableCups,
+} from './inventory.data';
 
 export const INITIAL_PRODUCTS = [
   {
@@ -68,31 +73,76 @@ export const INITIAL_PRODUCTS = [
 export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private enrichWithIngredientStock(product: any) {
+    if (product.recipes && product.recipes.length > 0) {
+      const maxCups = calculateMaxSellableCups(product.recipes, product.stock);
+      return {
+        ...product,
+        stock: maxCups,
+        availableCups: maxCups,
+        isAvailable: product.isAvailable && maxCups > 0,
+      };
+    }
+    return {
+      ...product,
+      availableCups: product.stock,
+    };
+  }
+
+  private getFallbackProductWithRecipe(product: any) {
+    const ingMap = new Map(INITIAL_INGREDIENTS.map((i) => [i.id, i]));
+    const recipes = (INITIAL_RECIPES[product.id] || []).map((r) => ({
+      ingredientId: r.ingredientId,
+      quantityRequired: r.quantityRequired,
+      ingredient: ingMap.get(r.ingredientId),
+    }));
+    const maxCups = calculateMaxSellableCups(recipes, product.stock);
+    return {
+      ...product,
+      stock: maxCups,
+      availableCups: maxCups,
+      isAvailable: maxCups > 0,
+      recipes,
+    };
+  }
+
   async findAll(category?: string) {
     try {
       const whereClause = category ? { category, isAvailable: true } : { isAvailable: true };
       const products = await this.prisma.product.findMany({
         where: whereClause,
+        include: {
+          recipes: {
+            include: { ingredient: true },
+          },
+        },
         orderBy: { createdAt: 'desc' },
       });
-      if (products.length > 0) return products;
-    } catch (e) {
-      // Fallback in-memory dataset when DB connection is pending or in seed phase
+      if (products.length > 0) {
+        return products.map((p) => this.enrichWithIngredientStock(p));
+      }
+    } catch {
+      // Fallback in-memory dataset when DB connection is pending or in isolated tests
     }
 
-    if (category) {
-      return INITIAL_PRODUCTS.filter((p) => p.category === category);
-    }
-    return INITIAL_PRODUCTS;
+    const list = category
+      ? INITIAL_PRODUCTS.filter((p) => p.category === category)
+      : INITIAL_PRODUCTS;
+    return list.map((p) => this.getFallbackProductWithRecipe(p));
   }
 
   async findOne(id: string) {
     try {
       const product = await this.prisma.product.findUnique({
         where: { id },
+        include: {
+          recipes: {
+            include: { ingredient: true },
+          },
+        },
       });
-      if (product) return product;
-    } catch (e) {
+      if (product) return this.enrichWithIngredientStock(product);
+    } catch {
       // Fallback
     }
 
@@ -100,6 +150,20 @@ export class ProductsService {
     if (!item) {
       throw new NotFoundException(`Không tìm thấy sản phẩm có mã ${id}`);
     }
-    return item;
+    return this.getFallbackProductWithRecipe(item);
+  }
+
+  async findAllIngredients() {
+    try {
+      if (this.prisma.ingredient?.findMany) {
+        const ingredients = await this.prisma.ingredient.findMany({
+          orderBy: { name: 'asc' },
+        });
+        if (ingredients.length > 0) return ingredients;
+      }
+    } catch {
+      // Fallback
+    }
+    return INITIAL_INGREDIENTS;
   }
 }

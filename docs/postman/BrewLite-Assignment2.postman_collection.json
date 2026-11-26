@@ -1,0 +1,509 @@
+{
+  "info": {
+    "_postman_id": "a2b3c4d5-brewlite-ass2-2026",
+    "name": "BrewLite Assignment 2 - Full Backend API & Security Tests",
+    "description": "Bộ Collection kiểm thử đầy đủ toàn bộ API Back-end BrewLite (Assignment 2):\n- Health Check & Menu + Chi tiết sản phẩm + Kho nguyên liệu thô (BOM)\n- Đăng ký / Đăng nhập JWT (User A & User B)\n- Bảo mật: Chặn thiếu JWT (401), Chống sửa giá từ Client (Price Tampering), Chặn vượt tồn kho (409)\n- Nghiệp vụ Hủy đơn PENDING -> CANCELLED & hoàn nguyên liệu\n- Thanh toán mô phỏng: Thành công (PAID), Replay Idempotency-Key, Thất bại (INSUFFICIENT_FUNDS -> CANCELLED)\n- Theo dõi chi tiết đơn & Lịch sử đơn hàng",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Health, Menu & BOM Inventory",
+      "item": [
+        {
+          "name": "GET Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Status is ok/degraded', function () { pm.expect(pm.response.json().status).to.be.oneOf(['ok', 'degraded']); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{host_url}}/health"
+          }
+        },
+        {
+          "name": "GET Danh sách Menu (Tính số ly từ nguyên liệu thô)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const products = pm.response.json();",
+                  "pm.test('Returns products with calculated stock & basePrice', function () {",
+                  "  pm.expect(products).to.be.an('array').that.is.not.empty;",
+                  "  pm.expect(products[0]).to.have.property('stock');",
+                  "  pm.expect(products[0]).to.have.property('basePrice');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/products"
+          }
+        },
+        {
+          "name": "GET Chi tiết sản phẩm (prod-001)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const p = pm.response.json();",
+                  "pm.test('Returns product details', function () {",
+                  "  pm.expect(p.id).to.eql('prod-001');",
+                  "  pm.expect(p.basePrice).to.eql(29000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/products/prod-001"
+          }
+        },
+        {
+          "name": "GET Kho nguyên vật liệu thô (g / ml)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Returns raw ingredients with unit and stockQuantity', function () {",
+                  "  const list = pm.response.json();",
+                  "  pm.expect(list).to.be.an('array').that.is.not.empty;",
+                  "  pm.expect(list[0]).to.have.property('stockQuantity');",
+                  "  pm.expect(list[0]).to.have.property('unit');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/products/ingredients"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Auth (Đăng ký & Đăng nhập JWT)",
+      "item": [
+        {
+          "name": "POST Đăng ký User A",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const ts = Date.now();",
+                  "pm.environment.set('email_a', 'userA_' + ts + '@sgu.edu.vn');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () { pm.response.to.have.status(201); });",
+                  "const res = pm.response.json();",
+                  "pm.test('Issued JWT accessToken', function () { pm.expect(res.accessToken).to.be.a('string'); });",
+                  "pm.environment.set('token_a', res.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email_a}}\",\n  \"password\": \"Password123\",\n  \"fullName\": \"Nguyễn Văn A (User A)\"\n}"
+            },
+            "url": "{{base_url}}/auth/register"
+          }
+        },
+        {
+          "name": "POST Đăng ký User B (Phục vụ test Concurrency)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const ts = Date.now();",
+                  "pm.environment.set('email_b', 'userB_' + ts + '@sgu.edu.vn');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set('token_b', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email_b}}\",\n  \"password\": \"Password123\",\n  \"fullName\": \"Trần Thị B (User B)\"\n}"
+            },
+            "url": "{{base_url}}/auth/register"
+          }
+        },
+        {
+          "name": "POST Đăng nhập User A",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const res = pm.response.json();",
+                  "pm.test('Returns JWT token', function () { pm.expect(res.accessToken).to.be.a('string'); });",
+                  "pm.environment.set('token_a', res.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email_a}}\",\n  \"password\": \"Password123\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Orders - Bảo mật, Vượt tồn kho & Hủy đơn",
+      "item": [
+        {
+          "name": "POST Tạo đơn thiếu JWT (Chặn 401 Unauthorized)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401 Unauthorized', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [{ \"productId\": \"prod-001\", \"size\": \"S\", \"quantity\": 1 }]\n}"
+            },
+            "url": "{{base_url}}/orders"
+          }
+        },
+        {
+          "name": "POST Tạo đơn - Test CHỐNG SỬA GIÁ (Client gửi unitPrice=1000)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () { pm.response.to.have.status(201); });",
+                  "const order = pm.response.json();",
+                  "pm.test('Server bỏ qua giá 1000đ, tính đúng từ DB (35,000 x 2 = 70,000)', function () {",
+                  "  pm.expect(order.subTotal).to.eql(70000);",
+                  "  pm.expect(order.totalAmount).to.eql(70000);",
+                  "  pm.expect(order.status).to.eql('PENDING');",
+                  "});",
+                  "pm.environment.set('order_to_cancel', order.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_a}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"productId\": \"prod-001\",\n      \"size\": \"M\",\n      \"sweetLevel\": 70,\n      \"iceLevel\": 50,\n      \"toppings\": [],\n      \"unitPrice\": 1000,\n      \"quantity\": 2\n    }\n  ],\n  \"note\": \"Demo Postman: cố tình sửa unitPrice=1000 để test Server Price Integrity\"\n}"
+            },
+            "url": "{{base_url}}/orders"
+          }
+        },
+        {
+          "name": "PATCH Hủy đơn hàng đặt nhầm (PENDING -> CANCELLED & hoàn kho)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Order status is CANCELLED', function () {",
+                  "  pm.expect(pm.response.json().order.status).to.eql('CANCELLED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_a}}" }],
+            "url": "{{base_url}}/orders/{{order_to_cancel}}/cancel"
+          }
+        },
+        {
+          "name": "POST Tạo đơn - Test VƯỢT TỒN KHO (Đặt 999 ly -> 409 Conflict)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409 Conflict (Chặn bán vượt tồn kho)', function () {",
+                  "  pm.response.to.have.status(409);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_a}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [{ \"productId\": \"prod-001\", \"size\": \"S\", \"quantity\": 999 }],\n  \"note\": \"Demo Postman: đặt vượt định lượng nguyên liệu\"\n}"
+            },
+            "url": "{{base_url}}/orders"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Checkout, Payment Idempotency & Order Tracking",
+      "item": [
+        {
+          "name": "POST Tạo đơn hàng hợp lệ (kèm Voucher SGUFREE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () { pm.response.to.have.status(201); });",
+                  "const order = pm.response.json();",
+                  "pm.test('Applied SGUFREE 15,000 VND discount', function () {",
+                  "  pm.expect(order.discountAmount).to.eql(15000);",
+                  "  pm.expect(order.status).to.eql('PENDING');",
+                  "});",
+                  "pm.environment.set('order_id', order.id);",
+                  "pm.environment.set('order_amount', order.totalAmount);",
+                  "pm.environment.set('idempotency_key', 'postman-idem-' + Date.now());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_a}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"productId\": \"prod-001\",\n      \"size\": \"M\",\n      \"sweetLevel\": 70,\n      \"iceLevel\": 50,\n      \"toppings\": [\"Kem Cheese phô mai béo\"],\n      \"quantity\": 1\n    }\n  ],\n  \"promotionCode\": \"SGUFREE\",\n  \"note\": \"Giao tại quầy SGU\"\n}"
+            },
+            "url": "{{base_url}}/orders"
+          }
+        },
+        {
+          "name": "POST Thanh toán lần 1 (Kèm Idempotency-Key)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const res = pm.response.json();",
+                  "pm.test('Order paid successfully', function () {",
+                  "  pm.expect(res.status).to.eql('PAID');",
+                  "  pm.expect(res.transactionCode).to.be.a('string');",
+                  "});",
+                  "pm.environment.set('tx_code', res.transactionCode);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{idempotency_key}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{order_id}}\",\n  \"method\": \"MOMO\",\n  \"amount\": {{order_amount}}\n}"
+            },
+            "url": "{{base_url}}/payments/process"
+          }
+        },
+        {
+          "name": "POST Thanh toán lần 2 (Replay cùng Idempotency-Key)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK (Idempotent Replay)', function () { pm.response.to.have.status(200); });",
+                  "const res = pm.response.json();",
+                  "pm.test('Returns identical transactionCode without double charge', function () {",
+                  "  pm.expect(res.isIdempotentReplay).to.eql(true);",
+                  "  pm.expect(res.transactionCode).to.eql(pm.environment.get('tx_code'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{idempotency_key}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{order_id}}\",\n  \"method\": \"MOMO\",\n  \"amount\": {{order_amount}}\n}"
+            },
+            "url": "{{base_url}}/payments/process"
+          }
+        },
+        {
+          "name": "POST Tạo đơn + Thanh toán thất bại (Không đủ số dư -> 400 & CANCELLED)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({",
+                  "  url: pm.environment.get('base_url') + '/orders',",
+                  "  method: 'POST',",
+                  "  header: {",
+                  "    'Content-Type': 'application/json',",
+                  "    'Authorization': 'Bearer ' + pm.environment.get('token_a')",
+                  "  },",
+                  "  body: {",
+                  "    mode: 'raw',",
+                  "    raw: JSON.stringify({ items: [{ productId: 'prod-001', size: 'S', quantity: 1 }] })",
+                  "  }",
+                  "}, function (err, res) {",
+                  "  if (!err && res.code === 201) {",
+                  "    pm.environment.set('fail_order_id', res.json().id);",
+                  "  }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 Bad Request (Insufficient funds)', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{fail_order_id}}\",\n  \"method\": \"CREDIT_CARD\",\n  \"amount\": 29000,\n  \"simulateScenario\": \"INSUFFICIENT_FUNDS\"\n}"
+            },
+            "url": "{{base_url}}/payments/process"
+          }
+        },
+        {
+          "name": "GET Chi tiết đơn hàng (Theo dõi trạng thái)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Order status is PAID', function () { pm.expect(pm.response.json().status).to.eql('PAID'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/orders/{{order_id}}"
+          }
+        },
+        {
+          "name": "GET Lịch sử đơn hàng của User A",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Contains created orders', function () {",
+                  "  pm.expect(pm.response.json()).to.be.an('array').that.is.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_a}}" }],
+            "url": "{{base_url}}/orders/my-orders"
+          }
+        }
+      ]
+    }
+  ]
+}
