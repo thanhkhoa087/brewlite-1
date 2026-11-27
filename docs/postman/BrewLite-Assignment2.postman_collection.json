@@ -1,16 +1,36 @@
 {
   "info": {
     "_postman_id": "a2b3c4d5-brewlite-ass2-2026",
-    "name": "BrewLite Assignment 2 - Full Backend API & Security Tests",
-    "description": "Bộ Collection kiểm thử đầy đủ toàn bộ API Back-end BrewLite (Assignment 2):\n- Health Check & Menu + Chi tiết sản phẩm + Kho nguyên liệu thô (BOM)\n- Đăng ký / Đăng nhập JWT (User A & User B)\n- Bảo mật: Chặn thiếu JWT (401), Chống sửa giá từ Client (Price Tampering), Chặn vượt tồn kho (409)\n- Nghiệp vụ Hủy đơn PENDING -> CANCELLED & hoàn nguyên liệu\n- Thanh toán mô phỏng: Thành công (PAID), Replay Idempotency-Key, Thất bại (INSUFFICIENT_FUNDS -> CANCELLED)\n- Theo dõi chi tiết đơn & Lịch sử đơn hàng",
+    "name": "BrewLite Assignment 2 - Full API Test (Customer, Barista & Manager)",
+    "description": "Bộ Collection kiểm thử toàn diện Back-end BrewLite (Assignment 2) cho 3 vai trò:\n- Production API: https://api-brewlite.onrender.com/api\n- Production Web: https://brewlite-web-fawn.vercel.app\n\nPhạm vi kiểm thử (40 request, tự động assert):\n1. Public: Health Check, Menu BOM, Lọc theo danh mục, Chi tiết sản phẩm, Kho nguyên liệu thô\n2. Auth JWT: Đăng ký User A/B (CUSTOMER), Đăng nhập sai mật khẩu (401), Đăng nhập Barista & Manager\n3. Khách hàng (Bảo mật & Tồn kho): Chặn thiếu JWT (401), Chống sửa giá (Price Tampering), Chặn hủy trộm đơn người khác (403), Hủy đơn PENDING -> CANCELLED hoàn kho, Chặn hủy lại lần 2 (400), Chặn vượt tồn kho (409)\n4. Khách hàng (Checkout & Thanh toán): Áp mã SGUFREE, Thanh toán lần 1, Replay Idempotency-Key không trừ đúp, Chặn khách hủy đơn đã PAID (400), Thanh toán thất bại tự hủy hoàn kho, Xem chi tiết & lịch sử đơn\n5. Phân quyền RBAC: Chặn Khách hàng xem toàn bộ đơn quán (403) và chặn đổi trạng thái đơn (403)\n6. Barista (KDS): Xem toàn bộ đơn, Lọc đơn PAID, Chặn chuyển sai state machine (PAID -> COMPLETED -> 400), Chuyển PAID -> PREPARING -> COMPLETED, Chặn hủy đơn đã COMPLETED (400)\n7. Quản lý (Manager): Xem toàn bộ đơn & kho BOM, Hủy đơn đã PAID/PREPARING -> CANCELLED và hoàn nguyên liệu vào kho",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    { "key": "host_url", "value": "https://api-brewlite.onrender.com" },
+    { "key": "base_url", "value": "https://api-brewlite.onrender.com/api" },
+    { "key": "web_url", "value": "https://brewlite-web-fawn.vercel.app" },
+    { "key": "email_a", "value": "" },
+    { "key": "email_b", "value": "" },
+    { "key": "token_a", "value": "" },
+    { "key": "token_b", "value": "" },
+    { "key": "token_barista", "value": "" },
+    { "key": "token_manager", "value": "" },
+    { "key": "order_to_cancel", "value": "" },
+    { "key": "order_id", "value": "" },
+    { "key": "order_amount", "value": "0" },
+    { "key": "fail_order_id", "value": "" },
+    { "key": "fail_order_amount", "value": "0" },
+    { "key": "manager_cancel_order_id", "value": "" },
+    { "key": "manager_cancel_amount", "value": "0" },
+    { "key": "idempotency_key", "value": "" },
+    { "key": "tx_code", "value": "" }
+  ],
   "item": [
     {
-      "name": "1. Health, Menu & BOM Inventory",
+      "name": "1. Public - Health, Menu & BOM Inventory",
       "item": [
         {
-          "name": "GET Health Check",
+          "name": "GET Health Check (Render + Supabase DB)",
           "event": [
             {
               "listen": "test",
@@ -18,7 +38,13 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Status is ok/degraded', function () { pm.expect(pm.response.json().status).to.be.oneOf(['ok', 'degraded']); });"
+                  "const body = pm.response.json();",
+                  "pm.test('Service status is ok/degraded', function () {",
+                  "  pm.expect(body.status).to.be.oneOf(['ok', 'degraded']);",
+                  "});",
+                  "pm.test('Database is connected (up)', function () {",
+                  "  pm.expect(body.info && body.info.database && body.info.database.status).to.eql('up');",
+                  "});"
                 ]
               }
             }
@@ -38,7 +64,7 @@
                 "exec": [
                   "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
                   "const products = pm.response.json();",
-                  "pm.test('Returns products with calculated stock & basePrice', function () {",
+                  "pm.test('Returns non-empty products with stock & basePrice', function () {",
                   "  pm.expect(products).to.be.an('array').that.is.not.empty;",
                   "  pm.expect(products[0]).to.have.property('stock');",
                   "  pm.expect(products[0]).to.have.property('basePrice');",
@@ -53,6 +79,29 @@
           }
         },
         {
+          "name": "GET Lọc Menu theo danh mục (Cà phê)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const products = pm.response.json();",
+                  "pm.test('All returned items belong to category Cà phê', function () {",
+                  "  pm.expect(products).to.be.an('array').that.is.not.empty;",
+                  "  products.forEach(function (p) { pm.expect(p.category).to.eql('Cà phê'); });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/products?category=C%C3%A0%20ph%C3%AA"
+          }
+        },
+        {
           "name": "GET Chi tiết sản phẩm (prod-001)",
           "event": [
             {
@@ -62,7 +111,7 @@
                 "exec": [
                   "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
                   "const p = pm.response.json();",
-                  "pm.test('Returns product details', function () {",
+                  "pm.test('Returns correct product details', function () {",
                   "  pm.expect(p.id).to.eql('prod-001');",
                   "  pm.expect(p.basePrice).to.eql(29000);",
                   "});"
@@ -102,18 +151,19 @@
       ]
     },
     {
-      "name": "2. Auth (Đăng ký & Đăng nhập JWT)",
+      "name": "2. Auth - Khách hàng, Barista & Quản lý (JWT)",
       "item": [
         {
-          "name": "POST Đăng ký User A",
+          "name": "POST Đăng ký User A (CUSTOMER)",
           "event": [
             {
               "listen": "prerequest",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "const ts = Date.now();",
-                  "pm.environment.set('email_a', 'userA_' + ts + '@sgu.edu.vn');"
+                  "const email = 'userA_' + Date.now() + '@sgu.edu.vn';",
+                  "pm.environment.set('email_a', email);",
+                  "pm.collectionVariables.set('email_a', email);"
                 ]
               }
             },
@@ -124,8 +174,12 @@
                 "exec": [
                   "pm.test('HTTP 201 Created', function () { pm.response.to.have.status(201); });",
                   "const res = pm.response.json();",
-                  "pm.test('Issued JWT accessToken', function () { pm.expect(res.accessToken).to.be.a('string'); });",
-                  "pm.environment.set('token_a', res.accessToken);"
+                  "pm.test('Issued JWT & role CUSTOMER', function () {",
+                  "  pm.expect(res.accessToken).to.be.a('string').and.not.be.empty;",
+                  "  pm.expect(res.user.role).to.eql('CUSTOMER');",
+                  "});",
+                  "pm.environment.set('token_a', res.accessToken);",
+                  "pm.collectionVariables.set('token_a', res.accessToken);"
                 ]
               }
             }
@@ -135,21 +189,22 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{email_a}}\",\n  \"password\": \"Password123\",\n  \"fullName\": \"Nguyễn Văn A (User A)\"\n}"
+              "raw": "{\n  \"email\": \"{{email_a}}\",\n  \"password\": \"Password123\",\n  \"fullName\": \"Nguyễn Văn A (Customer)\"\n}"
             },
             "url": "{{base_url}}/auth/register"
           }
         },
         {
-          "name": "POST Đăng ký User B (Phục vụ test Concurrency)",
+          "name": "POST Đăng ký User B (CUSTOMER - Test Ownership)",
           "event": [
             {
               "listen": "prerequest",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "const ts = Date.now();",
-                  "pm.environment.set('email_b', 'userB_' + ts + '@sgu.edu.vn');"
+                  "const email = 'userB_' + Date.now() + '@sgu.edu.vn';",
+                  "pm.environment.set('email_b', email);",
+                  "pm.collectionVariables.set('email_b', email);"
                 ]
               }
             },
@@ -159,7 +214,10 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 201 Created', function () { pm.response.to.have.status(201); });",
-                  "pm.environment.set('token_b', pm.response.json().accessToken);"
+                  "const res = pm.response.json();",
+                  "pm.test('Issued JWT for User B', function () { pm.expect(res.accessToken).to.be.a('string'); });",
+                  "pm.environment.set('token_b', res.accessToken);",
+                  "pm.collectionVariables.set('token_b', res.accessToken);"
                 ]
               }
             }
@@ -169,13 +227,13 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{email_b}}\",\n  \"password\": \"Password123\",\n  \"fullName\": \"Trần Thị B (User B)\"\n}"
+              "raw": "{\n  \"email\": \"{{email_b}}\",\n  \"password\": \"Password123\",\n  \"fullName\": \"Trần Thị B (Customer)\"\n}"
             },
             "url": "{{base_url}}/auth/register"
           }
         },
         {
-          "name": "POST Đăng nhập User A",
+          "name": "POST Đăng nhập User A (Thành công)",
           "event": [
             {
               "listen": "test",
@@ -184,8 +242,12 @@
                 "exec": [
                   "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
                   "const res = pm.response.json();",
-                  "pm.test('Returns JWT token', function () { pm.expect(res.accessToken).to.be.a('string'); });",
-                  "pm.environment.set('token_a', res.accessToken);"
+                  "pm.test('Returns JWT token & CUSTOMER role', function () {",
+                  "  pm.expect(res.accessToken).to.be.a('string');",
+                  "  pm.expect(res.user.role).to.eql('CUSTOMER');",
+                  "});",
+                  "pm.environment.set('token_a', res.accessToken);",
+                  "pm.collectionVariables.set('token_a', res.accessToken);"
                 ]
               }
             }
@@ -199,11 +261,94 @@
             },
             "url": "{{base_url}}/auth/login"
           }
+        },
+        {
+          "name": "POST Đăng nhập sai mật khẩu (Chặn 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401 Unauthorized', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email_a}}\",\n  \"password\": \"SaiMatKhau999\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        {
+          "name": "POST Đăng nhập Barista (barista@brewlite.vn)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const res = pm.response.json();",
+                  "pm.test('Returns JWT token & BARISTA role', function () {",
+                  "  pm.expect(res.accessToken).to.be.a('string').and.not.be.empty;",
+                  "  pm.expect(res.user.role).to.eql('BARISTA');",
+                  "});",
+                  "pm.environment.set('token_barista', res.accessToken);",
+                  "pm.collectionVariables.set('token_barista', res.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"barista@brewlite.vn\",\n  \"password\": \"Barista@123\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        {
+          "name": "POST Đăng nhập Quản lý (manager@brewlite.vn)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const res = pm.response.json();",
+                  "pm.test('Returns JWT token & MANAGER role', function () {",
+                  "  pm.expect(res.accessToken).to.be.a('string').and.not.be.empty;",
+                  "  pm.expect(res.user.role).to.eql('MANAGER');",
+                  "});",
+                  "pm.environment.set('token_manager', res.accessToken);",
+                  "pm.collectionVariables.set('token_manager', res.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"manager@brewlite.vn\",\n  \"password\": \"Manager@123\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
         }
       ]
     },
     {
-      "name": "3. Orders - Bảo mật, Vượt tồn kho & Hủy đơn",
+      "name": "3. Khách hàng - Bảo mật, Chống sửa giá, Vượt kho & Hủy đơn",
       "item": [
         {
           "name": "POST Tạo đơn thiếu JWT (Chặn 401 Unauthorized)",
@@ -229,7 +374,7 @@
           }
         },
         {
-          "name": "POST Tạo đơn - Test CHỐNG SỬA GIÁ (Client gửi unitPrice=1000)",
+          "name": "POST Tạo đơn - Test CHỐNG SỬA GIÁ (unitPrice=1000 -> Server tính 70,000đ)",
           "event": [
             {
               "listen": "test",
@@ -243,7 +388,8 @@
                   "  pm.expect(order.totalAmount).to.eql(70000);",
                   "  pm.expect(order.status).to.eql('PENDING');",
                   "});",
-                  "pm.environment.set('order_to_cancel', order.id);"
+                  "pm.environment.set('order_to_cancel', order.id);",
+                  "pm.collectionVariables.set('order_to_cancel', order.id);"
                 ]
               }
             }
@@ -262,7 +408,28 @@
           }
         },
         {
-          "name": "PATCH Hủy đơn hàng đặt nhầm (PENDING -> CANCELLED & hoàn kho)",
+          "name": "PATCH User B cố hủy trộm đơn User A (Chặn 403 Forbidden)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403 Forbidden (Chặn hủy đơn của người khác)', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_b}}" }],
+            "url": "{{base_url}}/orders/{{order_to_cancel}}/cancel"
+          }
+        },
+        {
+          "name": "PATCH User A hủy đơn đặt nhầm (PENDING -> CANCELLED & hoàn kho)",
           "event": [
             {
               "listen": "test",
@@ -284,7 +451,28 @@
           }
         },
         {
-          "name": "POST Tạo đơn - Test VƯỢT TỒN KHO (Đặt 999 ly -> 409 Conflict)",
+          "name": "PATCH Hủy lại đơn đã CANCELLED lần 2 (Chặn 400 Bad Request)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 Bad Request (Không cho hủy 2 lần)', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_a}}" }],
+            "url": "{{base_url}}/orders/{{order_to_cancel}}/cancel"
+          }
+        },
+        {
+          "name": "POST Tạo đơn - Test VƯỢT TỒN KHO (999 ly -> 409 Conflict)",
           "event": [
             {
               "listen": "test",
@@ -314,10 +502,10 @@
       ]
     },
     {
-      "name": "4. Checkout, Payment Idempotency & Order Tracking",
+      "name": "4. Khách hàng - Checkout, Thanh toán Idempotency & Theo dõi đơn",
       "item": [
         {
-          "name": "POST Tạo đơn hàng hợp lệ (kèm Voucher SGUFREE)",
+          "name": "POST Tạo đơn hợp lệ (kèm Voucher SGUFREE giảm 15,000đ)",
           "event": [
             {
               "listen": "test",
@@ -330,9 +518,13 @@
                   "  pm.expect(order.discountAmount).to.eql(15000);",
                   "  pm.expect(order.status).to.eql('PENDING');",
                   "});",
+                  "const idemKey = 'postman-idem-' + Date.now();",
                   "pm.environment.set('order_id', order.id);",
+                  "pm.collectionVariables.set('order_id', order.id);",
                   "pm.environment.set('order_amount', order.totalAmount);",
-                  "pm.environment.set('idempotency_key', 'postman-idem-' + Date.now());"
+                  "pm.collectionVariables.set('order_amount', order.totalAmount);",
+                  "pm.environment.set('idempotency_key', idemKey);",
+                  "pm.collectionVariables.set('idempotency_key', idemKey);"
                 ]
               }
             }
@@ -351,7 +543,7 @@
           }
         },
         {
-          "name": "POST Thanh toán lần 1 (Kèm Idempotency-Key)",
+          "name": "POST Thanh toán lần 1 (Kèm Idempotency-Key -> PAID)",
           "event": [
             {
               "listen": "test",
@@ -362,9 +554,10 @@
                   "const res = pm.response.json();",
                   "pm.test('Order paid successfully', function () {",
                   "  pm.expect(res.status).to.eql('PAID');",
-                  "  pm.expect(res.transactionCode).to.be.a('string');",
+                  "  pm.expect(res.transactionCode).to.be.a('string').and.not.be.empty;",
                   "});",
-                  "pm.environment.set('tx_code', res.transactionCode);"
+                  "pm.environment.set('tx_code', res.transactionCode);",
+                  "pm.collectionVariables.set('tx_code', res.transactionCode);"
                 ]
               }
             }
@@ -383,7 +576,7 @@
           }
         },
         {
-          "name": "POST Thanh toán lần 2 (Replay cùng Idempotency-Key)",
+          "name": "POST Thanh toán lần 2 (Replay cùng Idempotency-Key - không trừ đúp)",
           "event": [
             {
               "listen": "test",
@@ -394,7 +587,7 @@
                   "const res = pm.response.json();",
                   "pm.test('Returns identical transactionCode without double charge', function () {",
                   "  pm.expect(res.isIdempotentReplay).to.eql(true);",
-                  "  pm.expect(res.transactionCode).to.eql(pm.environment.get('tx_code'));",
+                  "  pm.expect(res.transactionCode).to.eql(pm.variables.get('tx_code'));",
                   "});"
                 ]
               }
@@ -414,32 +607,60 @@
           }
         },
         {
-          "name": "POST Tạo đơn + Thanh toán thất bại (Không đủ số dư -> 400 & CANCELLED)",
+          "name": "PATCH Khách cố hủy đơn đã PAID (Chặn 400 - chỉ hủy được PENDING)",
           "event": [
             {
-              "listen": "prerequest",
+              "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.sendRequest({",
-                  "  url: pm.environment.get('base_url') + '/orders',",
-                  "  method: 'POST',",
-                  "  header: {",
-                  "    'Content-Type': 'application/json',",
-                  "    'Authorization': 'Bearer ' + pm.environment.get('token_a')",
-                  "  },",
-                  "  body: {",
-                  "    mode: 'raw',",
-                  "    raw: JSON.stringify({ items: [{ productId: 'prod-001', size: 'S', quantity: 1 }] })",
-                  "  }",
-                  "}, function (err, res) {",
-                  "  if (!err && res.code === 201) {",
-                  "    pm.environment.set('fail_order_id', res.json().id);",
-                  "  }",
+                  "pm.test('HTTP 400 Bad Request (Khách không được hủy đơn đã PAID)', function () {",
+                  "  pm.response.to.have.status(400);",
                   "});"
                 ]
               }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_a}}" }],
+            "url": "{{base_url}}/orders/{{order_id}}/cancel"
+          }
+        },
+        {
+          "name": "POST Tạo đơn phục vụ test thanh toán thất bại",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () { pm.response.to.have.status(201); });",
+                  "const order = pm.response.json();",
+                  "pm.environment.set('fail_order_id', order.id);",
+                  "pm.collectionVariables.set('fail_order_id', order.id);",
+                  "pm.environment.set('fail_order_amount', order.totalAmount);",
+                  "pm.collectionVariables.set('fail_order_amount', order.totalAmount);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_a}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [{ \"productId\": \"prod-001\", \"size\": \"S\", \"quantity\": 1 }],\n  \"note\": \"Đơn test thanh toán không đủ số dư\"\n}"
             },
+            "url": "{{base_url}}/orders"
+          }
+        },
+        {
+          "name": "POST Thanh toán thất bại (INSUFFICIENT_FUNDS -> 400 & tự hủy)",
+          "event": [
             {
               "listen": "test",
               "script": {
@@ -457,13 +678,13 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"orderId\": \"{{fail_order_id}}\",\n  \"method\": \"CREDIT_CARD\",\n  \"amount\": 29000,\n  \"simulateScenario\": \"INSUFFICIENT_FUNDS\"\n}"
+              "raw": "{\n  \"orderId\": \"{{fail_order_id}}\",\n  \"method\": \"CREDIT_CARD\",\n  \"amount\": {{fail_order_amount}},\n  \"simulateScenario\": \"INSUFFICIENT_FUNDS\"\n}"
             },
             "url": "{{base_url}}/payments/process"
           }
         },
         {
-          "name": "GET Chi tiết đơn hàng (Theo dõi trạng thái)",
+          "name": "GET Kiểm tra đơn thanh toán thất bại đã tự chuyển CANCELLED",
           "event": [
             {
               "listen": "test",
@@ -471,7 +692,30 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Order status is PAID', function () { pm.expect(pm.response.json().status).to.eql('PAID'); });"
+                  "pm.test('Failed payment order auto-cancelled', function () {",
+                  "  pm.expect(pm.response.json().status).to.eql('CANCELLED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/orders/{{fail_order_id}}"
+          }
+        },
+        {
+          "name": "GET Chi tiết đơn hàng đã thanh toán (PAID)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Order status is PAID', function () {",
+                  "  pm.expect(pm.response.json().status).to.eql('PAID');",
+                  "});"
                 ]
               }
             }
@@ -482,7 +726,7 @@
           }
         },
         {
-          "name": "GET Lịch sử đơn hàng của User A",
+          "name": "GET Lịch sử đơn hàng của User A (/orders/my-orders)",
           "event": [
             {
               "listen": "test",
@@ -490,8 +734,11 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
-                  "pm.test('Contains created orders', function () {",
-                  "  pm.expect(pm.response.json()).to.be.an('array').that.is.not.empty;",
+                  "const orders = pm.response.json();",
+                  "pm.test('Contains created orders of User A', function () {",
+                  "  pm.expect(orders).to.be.an('array').that.is.not.empty;",
+                  "  const found = orders.some(function (o) { return o.id === pm.variables.get('order_id'); });",
+                  "  pm.expect(found).to.eql(true);",
                   "});"
                 ]
               }
@@ -501,6 +748,374 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token_a}}" }],
             "url": "{{base_url}}/orders/my-orders"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Phân quyền RBAC - Chặn Khách hàng dùng API nhân viên",
+      "item": [
+        {
+          "name": "GET Khách hàng cố xem toàn bộ đơn quán (Chặn 403 Forbidden)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403 Forbidden (CUSTOMER không được xem toàn bộ đơn)', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_a}}" }],
+            "url": "{{base_url}}/orders"
+          }
+        },
+        {
+          "name": "PATCH Khách hàng cố tự đổi trạng thái đơn (Chặn 403 Forbidden)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 403 Forbidden (CUSTOMER không được đổi trạng thái)', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_a}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\"\n}"
+            },
+            "url": "{{base_url}}/orders/{{order_id}}/status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Barista (KDS) - Nhận đơn, Pha chế, Hoàn thành & State Machine",
+      "item": [
+        {
+          "name": "GET Barista xem toàn bộ đơn hàng của quán",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const orders = pm.response.json();",
+                  "pm.test('Barista retrieves store orders list', function () {",
+                  "  pm.expect(orders).to.be.an('array').that.is.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_barista}}" }],
+            "url": "{{base_url}}/orders"
+          }
+        },
+        {
+          "name": "GET Barista lọc đơn đang chờ pha chế (status=PAID)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const orders = pm.response.json();",
+                  "pm.test('All filtered orders have status PAID', function () {",
+                  "  pm.expect(orders).to.be.an('array').that.is.not.empty;",
+                  "  orders.forEach(function (o) { pm.expect(o.status).to.eql('PAID'); });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_barista}}" }],
+            "url": "{{base_url}}/orders?status=PAID"
+          }
+        },
+        {
+          "name": "PATCH Barista nhảy cóc PAID -> COMPLETED (Chặn 400 State Machine)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 Bad Request (Phải qua PREPARING trước COMPLETED)', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_barista}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\"\n}"
+            },
+            "url": "{{base_url}}/orders/{{order_id}}/status"
+          }
+        },
+        {
+          "name": "PATCH Barista nhận pha chế (PAID -> PREPARING)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Order status updated to PREPARING', function () {",
+                  "  pm.expect(pm.response.json().status).to.eql('PREPARING');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_barista}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PREPARING\"\n}"
+            },
+            "url": "{{base_url}}/orders/{{order_id}}/status"
+          }
+        },
+        {
+          "name": "PATCH Barista hoàn thành pha chế (PREPARING -> COMPLETED)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Order status updated to COMPLETED', function () {",
+                  "  pm.expect(pm.response.json().status).to.eql('COMPLETED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_barista}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\"\n}"
+            },
+            "url": "{{base_url}}/orders/{{order_id}}/status"
+          }
+        },
+        {
+          "name": "PATCH Barista cố hủy đơn đã COMPLETED (Chặn 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 Bad Request (Không được hủy đơn đã hoàn thành)', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_barista}}" }],
+            "url": "{{base_url}}/orders/{{order_id}}/cancel"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Quản lý (Manager) - Giám sát quán, Kho BOM & Hủy đơn đang pha chế",
+      "item": [
+        {
+          "name": "GET Quản lý xem toàn bộ đơn hàng toàn quán",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Manager retrieves all store orders', function () {",
+                  "  pm.expect(pm.response.json()).to.be.an('array').that.is.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_manager}}" }],
+            "url": "{{base_url}}/orders"
+          }
+        },
+        {
+          "name": "GET Quản lý kiểm tra tồn kho nguyên vật liệu thô (BOM)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const list = pm.response.json();",
+                  "pm.test('Ingredients stock is non-negative', function () {",
+                  "  pm.expect(list).to.be.an('array').that.is.not.empty;",
+                  "  list.forEach(function (ing) { pm.expect(ing.stockQuantity).to.be.at.least(0); });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_manager}}" }],
+            "url": "{{base_url}}/products/ingredients"
+          }
+        },
+        {
+          "name": "POST Tạo đơn mới (Phục vụ test Quản lý hủy đơn đang pha chế)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 Created', function () { pm.response.to.have.status(201); });",
+                  "const order = pm.response.json();",
+                  "pm.environment.set('manager_cancel_order_id', order.id);",
+                  "pm.collectionVariables.set('manager_cancel_order_id', order.id);",
+                  "pm.environment.set('manager_cancel_amount', order.totalAmount);",
+                  "pm.collectionVariables.set('manager_cancel_amount', order.totalAmount);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_a}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [{ \"productId\": \"prod-001\", \"size\": \"S\", \"quantity\": 1 }],\n  \"note\": \"Đơn test quyền Quản lý hủy đơn đang PREPARING\"\n}"
+            },
+            "url": "{{base_url}}/orders"
+          }
+        },
+        {
+          "name": "POST Thanh toán đơn trên (-> PAID)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Status is PAID', function () { pm.expect(pm.response.json().status).to.eql('PAID'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{manager_cancel_order_id}}\",\n  \"method\": \"VNPAY\",\n  \"amount\": {{manager_cancel_amount}}\n}"
+            },
+            "url": "{{base_url}}/payments/process"
+          }
+        },
+        {
+          "name": "PATCH Quản lý chuyển đơn sang PREPARING",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Status is PREPARING', function () { pm.expect(pm.response.json().status).to.eql('PREPARING'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_manager}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PREPARING\"\n}"
+            },
+            "url": "{{base_url}}/orders/{{manager_cancel_order_id}}/status"
+          }
+        },
+        {
+          "name": "PATCH Quản lý hủy đơn đang PREPARING (PREPARING -> CANCELLED & hoàn kho)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Manager cancelled PREPARING order and restored stock', function () {",
+                  "  pm.expect(pm.response.json().order.status).to.eql('CANCELLED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_manager}}" }],
+            "url": "{{base_url}}/orders/{{manager_cancel_order_id}}/cancel"
           }
         }
       ]
