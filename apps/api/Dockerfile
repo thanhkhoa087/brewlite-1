@@ -24,11 +24,11 @@ RUN apk add --no-cache curl
 COPY apps/api/package*.json ./
 COPY apps/api/prisma ./prisma/
 
-RUN npm install --omit=dev
-RUN npx prisma generate
+RUN npm install --omit=dev && npm install -g prisma@5.14.0
+RUN prisma generate
 
 COPY --from=builder /usr/src/app/dist ./dist
 
 EXPOSE 5000
 
-CMD ["node", "dist/main"]
+CMD ["sh", "-c", "prisma migrate deploy || echo 'Skipping migration (DB unreachable)'; node dist/main"]
