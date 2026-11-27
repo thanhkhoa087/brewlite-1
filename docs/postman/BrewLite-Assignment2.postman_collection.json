@@ -98,7 +98,17 @@
           ],
           "request": {
             "method": "GET",
-            "url": "{{base_url}}/products?category=C%C3%A0%20ph%C3%AA"
+            "url": {
+              "raw": "{{base_url}}/products?category=Cà phê",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "Cà phê"
+                }
+              ]
+            }
           }
         },
         {
