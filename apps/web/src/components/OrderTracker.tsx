@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, Clock, Coffee, Sparkles, XCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { X, CheckCircle, Clock, Coffee, Sparkles, XCircle, RefreshCw } from 'lucide-react';
+import { api } from '../services/api';
 
 interface OrderTrackerProps {
   order: any;
@@ -23,14 +24,37 @@ const STATUS_TO_STEP: Record<string, number> = {
 };
 
 export function OrderTracker({ order, onClose }: OrderTrackerProps) {
-  const isCancelled = order?.status === 'CANCELLED';
-  const initialStep = STATUS_TO_STEP[order?.status] ?? 0;
-  const [currentStep, setCurrentStep] = useState(initialStep);
+  const [liveOrder, setLiveOrder] = useState<any>(order);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Sync step whenever selected order changes
+  // Sync local state whenever parent passes a different order
   useEffect(() => {
-    setCurrentStep(STATUS_TO_STEP[order?.status] ?? 0);
-  }, [order?.id, order?.status]);
+    setLiveOrder(order);
+  }, [order]);
+
+  const currentStatus = liveOrder?.status || 'PENDING';
+  const isCancelled = currentStatus === 'CANCELLED';
+  const isTerminal = currentStatus === 'COMPLETED' || currentStatus === 'CANCELLED';
+  const currentStep = STATUS_TO_STEP[currentStatus] ?? 0;
+
+  const fetchLatestOrder = useCallback(async (showSpinner = false) => {
+    if (!liveOrder?.id) return;
+    if (showSpinner) setRefreshing(true);
+    try {
+      const fresh = await api.getOrder(liveOrder.id);
+      if (fresh && fresh.id) {
+        setLiveOrder((prev: any) => ({
+          ...prev,
+          ...fresh,
+          items: fresh.items?.length ? fresh.items : prev?.items,
+        }));
+      }
+    } catch {
+      // Keep current state if temporary network glitch occurs
+    } finally {
+      if (showSpinner) setRefreshing(false);
+    }
+  }, [liveOrder?.id]);
 
   // Lock body scroll when tracker is open
   useEffect(() => {
@@ -41,18 +65,21 @@ export function OrderTracker({ order, onClose }: OrderTrackerProps) {
     };
   }, []);
 
-  // Only simulate live Barista progress for freshly PAID orders
+  // Poll real order status from Backend (synced with Barista KDS) every 3 seconds
   useEffect(() => {
-    if (order?.status !== 'PAID') return;
-    const t1 = setTimeout(() => setCurrentStep(2), 3500); // 3.5s -> PREPARING
-    const t2 = setTimeout(() => setCurrentStep(3), 8000); // 8s -> COMPLETED
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, [order?.id, order?.status]);
+    if (!liveOrder?.id || isTerminal) return;
 
-  if (!order) return null;
+    fetchLatestOrder(false);
+    const interval = setInterval(() => {
+      fetchLatestOrder(false);
+    }, 3000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [liveOrder?.id, isTerminal, fetchLatestOrder]);
+
+  if (!liveOrder) return null;
 
   const formatPrice = (p: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
@@ -70,19 +97,30 @@ export function OrderTracker({ order, onClose }: OrderTrackerProps) {
             <span className="text-[10px] uppercase font-bold tracking-widest text-amber-200">
               {isCancelled ? 'Đơn hàng đã hủy' : 'Theo dõi đơn hàng thời gian thực'}
             </span>
-            <h3 className="font-bold text-lg mt-0.5">Mã đơn: #{order.orderCode || 'BWL-LIVE'}</h3>
-            {order.payment?.transactionCode && (
+            <h3 className="font-bold text-lg mt-0.5">Mã đơn: #{liveOrder.orderCode || 'BWL-LIVE'}</h3>
+            {liveOrder.payment?.transactionCode && (
               <p className="text-xs text-amber-100/90 mt-1">
-                Giao dịch: {order.payment.transactionCode}
+                Giao dịch: {liveOrder.payment.transactionCode}
               </p>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {!isTerminal && (
+              <button
+                onClick={() => fetchLatestOrder(true)}
+                title="Cập nhật trạng thái mới nhất"
+                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-colors"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Timeline Progress or Cancelled Notice */}
@@ -139,13 +177,18 @@ export function OrderTracker({ order, onClose }: OrderTrackerProps) {
               </div>
 
               {/* Current Status Message */}
-              <div className="mt-6 p-3 bg-amber-50 rounded-2xl border border-amber-200/70 text-center">
+              <div className="mt-6 p-3 bg-amber-50 rounded-2xl border border-amber-200/70 text-center space-y-1">
                 <p className="text-xs font-semibold text-amber-900">
                   {currentStep === 0 && 'Đơn hàng đã tạo và đang chờ hoàn tất thanh toán.'}
-                  {currentStep === 1 && 'Đơn hàng đã được xác nhận và gửi tới quầy Barista.'}
+                  {currentStep === 1 && 'Đã thanh toán! Đơn đang chờ Barista xác nhận pha chế.'}
                   {currentStep === 2 && 'Barista đang chuẩn bị nguyên liệu và pha chế đồ uống...'}
                   {currentStep === 3 && 'Đồ uống đã pha chế xong! Mời bạn tới quầy nhận món.'}
                 </p>
+                {!isTerminal && (
+                  <p className="text-[10px] text-amber-700/80">
+                    Tự động đồng bộ trạng thái thật từ quầy Barista mỗi 3 giây
+                  </p>
+                )}
               </div>
             </>
           )}
@@ -156,7 +199,7 @@ export function OrderTracker({ order, onClose }: OrderTrackerProps) {
           <h4 className="font-bold text-stone-800 uppercase tracking-wider text-[11px] mb-2">
             Món đã đặt
           </h4>
-          {order.items?.map((item: any, i: number) => (
+          {liveOrder.items?.map((item: any, i: number) => (
             <div key={i} className="flex justify-between py-1 border-b border-stone-100 gap-2">
               <div className="text-stone-700">
                 <span>
@@ -176,7 +219,7 @@ export function OrderTracker({ order, onClose }: OrderTrackerProps) {
 
           <div className="flex justify-between pt-2 font-bold text-sm text-stone-900">
             <span>Tổng thanh toán</span>
-            <span className="text-amber-900">{formatPrice(order.totalAmount || 0)}</span>
+            <span className="text-amber-900">{formatPrice(liveOrder.totalAmount || 0)}</span>
           </div>
         </div>
 

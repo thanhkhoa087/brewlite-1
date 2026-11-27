@@ -131,7 +131,7 @@ export const api = {
   },
 
   async getOrder(orderId: string) {
-    const res = await fetch(`${API_URL}/orders/${orderId}`);
+    const res = await fetch(`${API_URL}/orders/${orderId}`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Không tìm thấy thông tin đơn hàng');
     return res.json();
   },
