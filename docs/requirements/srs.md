@@ -14,6 +14,7 @@
 | **FR-08** | Xem lịch sử đơn hàng cá nhân | Lịch sử | **Should** | **Given** người dùng đã đăng nhập, **When** vào mục "Đơn hàng của tôi", **Then** danh sách các đơn đã đặt được liệt kê theo thứ tự thời gian giảm dần với trạng thái rõ ràng. |
 | **FR-09** | Áp dụng mã khuyến mãi (Promotion) | Khuyến mãi | **Could** | **Given** người dùng nhập mã voucher hợp lệ tại giỏ hàng, **When** hệ thống xác thực điều kiện áp dụng, **Then** giảm trực tiếp số tiền chiết khấu vào tổng thanh toán. |
 | **FR-10** | Tích điểm thành viên (Loyalty) | Khách hàng thân thiết | **Won't** (MVP) | Hệ thống tích lũy điểm thưởng tương ứng 5% giá trị đơn hàng sau khi hoàn tất. *(Bảo lưu triển khai ở giai đoạn mở rộng)* |
+| **FR-11** | Quản lý đơn hàng & kho nguyên liệu (Barista KDS) | Quầy pha chế | **Must** | **Given** nhân viên đăng nhập bằng tài khoản vai trò `BARISTA`/`MANAGER`, **When** truy cập `/barista`, **Then** xem được toàn bộ đơn hàng, chuyển trạng thái pha chế (`PENDING -> PAID -> PREPARING -> COMPLETED`), hủy đơn hoàn nguyên liệu và xem tồn kho nguyên liệu BOM; tài khoản `CUSTOMER` bị chặn `HTTP 403`. |
 
 ---
 

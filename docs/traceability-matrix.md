@@ -16,6 +16,7 @@ Bảng ma trận truy vết thể hiện sự liên kết chặt chẽ và nhấ
 | **FR-08** | US-06: Xem lịch sử đơn hàng đã đặt | `class-diagram.puml` (`User` - `Order`) | API: `GET /api/orders/my-orders` (`/api/orders/me`)<br>UI: `OrderHistoryModal.tsx`, `Navbar.tsx` | **API-T03:** `orders.service.spec.ts` & `orders-payments.integration.spec.ts` (truy vấn đơn hàng theo `userId`) |
 | **FR-09** | US-07: Áp dụng mã giảm giá | `class-diagram.puml` (`Promotion`) | Service: `orders.service.ts` (voucher `SGUFREE`)<br>UI: `CartDrawer.tsx`, `CheckoutModal.tsx` | **UNIT-T01:** `orders.service.spec.ts` (test trừ 15.000đ voucher `SGUFREE`) |
 | **FR-10** | US-08: Tích điểm thành viên | `class-diagram.puml` (`LoyaltyTransaction`) | Schema: `apps/api/prisma/schema.prisma` (`LoyaltyTransaction`) | **DOC-T01:** Mô hình dữ liệu đã sẵn sàng; bảo lưu triển khai ở phiên bản mở rộng (Won't MVP) |
+| **FR-11** | UC-07: Quản lý đơn & kho nguyên liệu (Barista KDS) | `usecase-overview.puml`, `class-diagram.puml` (`Ingredient`) | API: `GET /api/orders`, `PATCH /api/orders/:id/status`, `RolesGuard`<br>UI: `apps/web/src/app/barista/page.tsx` | **INT-T04:** `orders.service.spec.ts` & `orders-payments.integration.spec.ts` (`BARISTA RBAC`: 403 Customer, 200 Barista, hoàn kho khi hủy) |
 
 ---
 

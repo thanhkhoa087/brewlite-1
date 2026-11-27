@@ -8,7 +8,9 @@ Hệ thống đặt đồ uống tinh gọn theo luồng:
 
 ## Liên kết chính
 - **Repository:** https://github.com/thanhkhoa087/brewlite-1
-- **Frontend Production (HTTPS):** https://brewlite-web.vercel.app
+- **Release v1.0.0:** https://github.com/thanhkhoa087/brewlite-1/releases/tag/v1.0.0
+- **Frontend Production (HTTPS):** https://brewlite-web-fawn.vercel.app
+- **Trang Quầy Barista KDS:** https://brewlite-web-fawn.vercel.app/barista (`barista@brewlite.vn` / `Barista@123`)
 - **Backend API Production:** https://api-brewlite.onrender.com/api
 - **Health Check:** https://api-brewlite.onrender.com/health
 

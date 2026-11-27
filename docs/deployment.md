@@ -9,7 +9,7 @@ Hệ thống BrewLite được thiết kế phân tách rõ ràng 3 vùng môi t
 
 | Thành phần | Môi trường Local Dev | Môi trường CI (GitHub Actions) | Môi trường Production (Cloud PaaS) |
 | :--- | :--- | :--- | :--- |
-| **Frontend Web** | Next.js Dev/Docker (`localhost:3000`) | Lint, Unit Test & Next.js Build | Vercel Edge (`https://brewlite-web.vercel.app`) |
+| **Frontend Web** | Next.js Dev/Docker (`localhost:3000`) | Lint, Unit Test & Next.js Build | Vercel Edge (`https://brewlite-web-fawn.vercel.app`, gồm `/` và `/barista`) |
 | **Backend API** | NestJS Dev/Docker (`localhost:5000`) | Lint, Unit, Integration & E2E Test | Render Web Service (`https://api-brewlite.onrender.com/api`) |
 | **Health Check** | `http://localhost:5000/health` | Integration & E2E Assertion | `https://api-brewlite.onrender.com/health` |
 | **Cơ sở dữ liệu** | PostgreSQL 16 (`localhost:5433 -> 5432`) | PostgreSQL 16 Service Container | Managed PostgreSQL 16 (Private VPC, không public) |
