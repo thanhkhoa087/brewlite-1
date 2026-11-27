@@ -150,4 +150,45 @@ export const api = {
     if (!res.ok) throw new Error(data.message || 'Không thể hủy đơn hàng');
     return data;
   },
+
+  async getAllOrders(status?: string, token?: string) {
+    const headers: Record<string, string> = {};
+    const effectiveToken = token || (typeof window !== 'undefined' ? localStorage.getItem('brewlite_token') : null);
+    if (effectiveToken) {
+      headers['Authorization'] = `Bearer ${effectiveToken}`;
+    }
+    const query = status && status !== 'ALL' ? `?status=${encodeURIComponent(status)}` : '';
+    const res = await fetch(`${API_URL}/orders${query}`, {
+      headers,
+      cache: 'no-store',
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Không thể tải danh sách đơn hàng');
+    return data;
+  },
+
+  async updateOrderStatus(orderId: string, status: string, token?: string) {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    const effectiveToken = token || (typeof window !== 'undefined' ? localStorage.getItem('brewlite_token') : null);
+    if (effectiveToken) {
+      headers['Authorization'] = `Bearer ${effectiveToken}`;
+    }
+    const res = await fetch(`${API_URL}/orders/${orderId}/status`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ status }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Không thể cập nhật trạng thái đơn hàng');
+    return data;
+  },
+
+  async getIngredients() {
+    const res = await fetch(`${API_URL}/products/ingredients`, { cache: 'no-store' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Không thể tải tồn kho nguyên liệu');
+    return data;
+  },
 };

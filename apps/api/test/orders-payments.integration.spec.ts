@@ -107,9 +107,12 @@ describe('BrewLite API Integration Tests (Price Security, BOM, Concurrency, Canc
         findUnique: jest.fn().mockImplementation(({ where }) =>
           Promise.resolve(orders.get(where.id) || null),
         ),
-        findMany: jest.fn().mockImplementation(({ where }) =>
-          Promise.resolve(Array.from(orders.values()).filter((o) => o.userId === where.userId)),
-        ),
+        findMany: jest.fn().mockImplementation(({ where } = {}) => {
+          let list = Array.from(orders.values());
+          if (where?.userId) list = list.filter((o) => o.userId === where.userId);
+          if (where?.status) list = list.filter((o) => o.status === where.status);
+          return Promise.resolve(list);
+        }),
         updateMany: jest.fn().mockImplementation(({ where, data }) => {
           const rec = orders.get(where.id);
           if (!rec || (where.status && rec.status !== where.status)) {
@@ -292,5 +295,48 @@ describe('BrewLite API Integration Tests (Price Security, BOM, Concurrency, Canc
     const statuses = [resA.status, resB.status].sort();
     expect(statuses).toEqual([201, 409]);
     expect(ingredients.get('ing-coffee').stockQuantity).toBe(0);
+  });
+
+  it('BARISTA RBAC: CUSTOMER is blocked (403); BARISTA lists orders and transitions PAID -> PREPARING -> COMPLETED', async () => {
+    // Customer cannot access staff order list or update status
+    await request(app.getHttpServer())
+      .get('/api/orders')
+      .set('Authorization', `Bearer ${tokenUserA}`)
+      .expect(403);
+
+    await request(app.getHttpServer())
+      .patch(`/api/orders/${createdOrderId}/status`)
+      .set('Authorization', `Bearer ${tokenUserA}`)
+      .send({ status: 'PREPARING' })
+      .expect(403);
+
+    // Promote userB to BARISTA and re-login to obtain BARISTA JWT
+    const userB = users.get('userB@sgu.edu.vn');
+    userB.role = 'BARISTA';
+    const loginBarista = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ email: 'userB@sgu.edu.vn', password: 'Password123' })
+      .expect(200);
+    const baristaToken = loginBarista.body.accessToken;
+
+    const allOrders = await request(app.getHttpServer())
+      .get('/api/orders')
+      .set('Authorization', `Bearer ${baristaToken}`)
+      .expect(200);
+    expect(allOrders.body.length).toBeGreaterThanOrEqual(1);
+
+    const prepRes = await request(app.getHttpServer())
+      .patch(`/api/orders/${createdOrderId}/status`)
+      .set('Authorization', `Bearer ${baristaToken}`)
+      .send({ status: 'PREPARING' })
+      .expect(200);
+    expect(prepRes.body.status).toBe('PREPARING');
+
+    const doneRes = await request(app.getHttpServer())
+      .patch(`/api/orders/${createdOrderId}/status`)
+      .set('Authorization', `Bearer ${baristaToken}`)
+      .send({ status: 'COMPLETED' })
+      .expect(200);
+    expect(doneRes.body.status).toBe('COMPLETED');
   });
 });

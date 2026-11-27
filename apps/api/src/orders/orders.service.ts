@@ -321,22 +321,28 @@ export class OrdersService {
       throw new BadRequestException('Đơn hàng này đã được hủy trước đó');
     }
 
-    if (order.status !== 'PENDING') {
+    if (order.status === 'COMPLETED') {
+      throw new BadRequestException('Không thể hủy đơn hàng đã hoàn thành');
+    }
+
+    if (!isStaff && order.status !== 'PENDING') {
       throw new BadRequestException(
         `Không thể hủy đơn hàng ở trạng thái ${order.status}. Chỉ hỗ trợ hủy đơn ở trạng thái PENDING.`,
       );
     }
+
+    const cancellableStatuses = isStaff ? ['PENDING', 'PAID', 'PREPARING'] : ['PENDING'];
 
     // Attempt transactional status change + stock restoration in PostgreSQL
     try {
       const cancelled = await this.prisma.$transaction(async (tx) => {
         if (tx.order?.updateMany) {
           const res = await tx.order.updateMany({
-            where: { id: orderId, status: 'PENDING' },
+            where: { id: orderId, status: order.status },
             data: { status: 'CANCELLED' },
           });
           if (res.count === 0) {
-            throw new BadRequestException('Đơn hàng không còn ở trạng thái PENDING để hủy');
+            throw new BadRequestException('Đơn hàng không còn ở trạng thái hợp lệ để hủy');
           }
         } else if (tx.order?.update) {
           await tx.order.update({
@@ -362,7 +368,7 @@ export class OrdersService {
 
       if (cancelled) {
         return {
-          message: 'Đã hủy đơn hàng thành công (PENDING -> CANCELLED). Vui lòng đặt lại đơn mới nếu cần.',
+          message: `Đã hủy đơn hàng thành công (${order.status} -> CANCELLED) và hoàn lại nguyên liệu vào kho.`,
           order: cancelled,
         };
       }
@@ -378,9 +384,10 @@ export class OrdersService {
       if (!inMem) {
         throw new NotFoundException(`Không tìm thấy đơn hàng mã ${orderId}`);
       }
-      if (inMem.status !== 'PENDING') {
-        throw new BadRequestException('Đơn hàng không còn ở trạng thái PENDING để hủy');
+      if (!cancellableStatuses.includes(inMem.status)) {
+        throw new BadRequestException('Đơn hàng không còn ở trạng thái hợp lệ để hủy');
       }
+      const prevStatus = inMem.status;
       inMem.status = 'CANCELLED';
       for (const item of inMem.items || []) {
         const recipes = INITIAL_RECIPES[item.productId] || [];
@@ -390,10 +397,100 @@ export class OrdersService {
         }
       }
       return {
-        message: 'Đã hủy đơn hàng thành công (PENDING -> CANCELLED). Vui lòng đặt lại đơn mới nếu cần.',
+        message: `Đã hủy đơn hàng thành công (${prevStatus} -> CANCELLED) và hoàn lại nguyên liệu vào kho.`,
         order: inMem,
       };
     });
+  }
+
+  /**
+   * Barista/Manager/Admin: Lấy toàn bộ danh sách đơn hàng (hỗ trợ lọc theo trạng thái)
+   */
+  async findAll(status?: string) {
+    try {
+      const whereClause: any = status && status !== 'ALL' ? { status } : {};
+      const orders = await this.prisma.order.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { id: true, fullName: true, email: true } },
+          items: {
+            include: {
+              product: { select: { name: true, imageUrl: true } },
+            },
+          },
+          payment: true,
+        },
+      });
+      return orders;
+    } catch {
+      // Fallback to in-memory store
+    }
+
+    const all = Array.from(this.inMemoryOrders.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+    return status && status !== 'ALL' ? all.filter((o) => o.status === status) : all;
+  }
+
+  /**
+   * Barista/Manager/Admin: Chuyển trạng thái đơn hàng theo state machine hợp lệ
+   * Nếu chuyển sang CANCELLED -> tự động hoàn lại nguyên liệu vào kho
+   */
+  async transitionStatus(orderId: string, newStatus: string) {
+    const order = await this.findOne(orderId);
+    const currentStatus = order.status;
+
+    if (currentStatus === newStatus) {
+      return order;
+    }
+
+    const allowedTransitions: Record<string, string[]> = {
+      PENDING: ['PAID', 'CANCELLED'],
+      PAID: ['PREPARING', 'CANCELLED'],
+      PREPARING: ['COMPLETED', 'CANCELLED'],
+      COMPLETED: [],
+      CANCELLED: [],
+    };
+
+    const allowed = allowedTransitions[currentStatus] || [];
+    if (!allowed.includes(newStatus)) {
+      throw new BadRequestException(
+        `Không thể chuyển trạng thái từ ${currentStatus} sang ${newStatus}`,
+      );
+    }
+
+    if (newStatus === 'CANCELLED') {
+      const res = await this.cancelOrder(orderId, undefined, 'BARISTA');
+      return res.order;
+    }
+
+    try {
+      const updated = await this.prisma.order.update({
+        where: { id: orderId },
+        data: { status: newStatus as any },
+        include: {
+          user: { select: { id: true, fullName: true, email: true } },
+          items: {
+            include: {
+              product: { select: { name: true, imageUrl: true } },
+            },
+          },
+          payment: true,
+        },
+      });
+      if (updated) return updated;
+    } catch {
+      // Fallback to in-memory store
+    }
+
+    const inMem = this.inMemoryOrders.get(orderId);
+    if (inMem) {
+      inMem.status = newStatus;
+      this.inMemoryOrders.set(orderId, inMem);
+      return inMem;
+    }
+    throw new NotFoundException(`Không tìm thấy đơn hàng ${orderId}`);
   }
 
   private async restoreIngredientsInTx(tx: any, items: any[]) {

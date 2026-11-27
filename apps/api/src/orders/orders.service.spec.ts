@@ -235,4 +235,35 @@ describe('OrdersService (Unit Test - Price Security, BOM Concurrency & Cancel)',
     expect(orders.length).toBe(1);
     expect(orders[0].userId).toBe('usr-1');
   });
+
+  it('BARISTA: should transition PENDING -> PAID -> PREPARING -> COMPLETED and reject invalid jump', async () => {
+    const order = await service.create('usr-1', {
+      items: [{ productId: 'prod-001', quantity: 1, size: 'S' }],
+    });
+
+    await expect(service.transitionStatus(order.id, 'COMPLETED')).rejects.toThrow(
+      BadRequestException,
+    );
+
+    const paid = await service.transitionStatus(order.id, 'PAID');
+    expect(paid.status).toBe('PAID');
+
+    const preparing = await service.transitionStatus(order.id, 'PREPARING');
+    expect(preparing.status).toBe('PREPARING');
+
+    const completed = await service.transitionStatus(order.id, 'COMPLETED');
+    expect(completed.status).toBe('COMPLETED');
+  });
+
+  it('BARISTA: should cancel PAID order and restore raw ingredients to inventory', async () => {
+    const order = await service.create('usr-1', {
+      items: [{ productId: 'prod-001', quantity: 2, size: 'S' }],
+    });
+    await service.transitionStatus(order.id, 'PAID');
+    expect(ingredientsDb.get('ing-coffee')!.stockQuantity).toBe(80);
+
+    const cancelled = await service.transitionStatus(order.id, 'CANCELLED');
+    expect(cancelled.status).toBe('CANCELLED');
+    expect(ingredientsDb.get('ing-coffee')!.stockQuantity).toBe(100);
+  });
 });

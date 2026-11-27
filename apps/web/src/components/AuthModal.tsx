@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { X, Lock, Mail, User, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -129,17 +130,24 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>{isRegister ? 'Tạo tài khoản' : 'Đăng nhập'}</span>}
           </button>
 
-          <div className="text-center pt-2">
+          <div className="text-center pt-2 space-y-1.5">
             <button
               type="button"
               onClick={() => {
                 setIsRegister(!isRegister);
                 setError('');
               }}
-              className="text-xs text-amber-800 hover:underline font-medium"
+              className="text-xs text-amber-800 hover:underline font-medium block mx-auto"
             >
               {isRegister ? 'Đã có tài khoản? Đăng nhập ngay' : 'Chưa có tài khoản? Đăng ký'}
             </button>
+            <Link
+              href="/barista"
+              onClick={onClose}
+              className="text-[11px] text-stone-500 hover:text-amber-800 hover:underline block"
+            >
+              Đăng nhập dành cho Nhân viên Quầy (Barista) →
+            </Link>
           </div>
         </form>
       </div>

@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { ShoppingBag, Coffee, User as UserIcon, LogOut, Receipt } from 'lucide-react';
+import Link from 'next/link';
+import { ShoppingBag, Coffee, User as UserIcon, LogOut, Receipt, ChefHat } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -14,6 +15,7 @@ interface NavbarProps {
 export function Navbar({ onOpenCart, onOpenAuth, onOpenHistory }: NavbarProps) {
   const { totalQuantity } = useCart();
   const { user, logout, isAuthenticated } = useAuth();
+  const isStaff = ['BARISTA', 'MANAGER', 'ADMIN'].includes(user?.role || '');
 
   return (
     <header className="w-full bg-white border-b border-amber-100 shadow-sm">
@@ -30,7 +32,17 @@ export function Navbar({ onOpenCart, onOpenAuth, onOpenHistory }: NavbarProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2">
+          {isStaff && (
+            <Link
+              href="/barista"
+              className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-full bg-amber-800 text-white text-[11px] font-bold hover:bg-amber-900 transition-colors shadow-sm"
+              title="Trang quản lý quầy Barista"
+            >
+              <ChefHat className="w-3.5 h-3.5" />
+              <span>Barista</span>
+            </Link>
+          )}
           {isAuthenticated ? (
             <div className="flex items-center space-x-1.5">
               {onOpenHistory && (

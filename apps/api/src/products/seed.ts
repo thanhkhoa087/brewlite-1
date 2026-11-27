@@ -1,10 +1,36 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 import { INITIAL_PRODUCTS } from './products.service';
 import { INITIAL_INGREDIENTS, INITIAL_RECIPES, calculateMaxSellableCups } from './inventory.data';
 
 const prisma = new PrismaClient();
 
 async function main() {
+  console.log('0. Seeding staff accounts (Barista & Manager)...');
+  const baristaHash = await bcrypt.hash('Barista@123', 10);
+  await prisma.user.upsert({
+    where: { email: 'barista@brewlite.vn' },
+    update: { role: 'BARISTA', fullName: 'Nhân viên Barista SGU' },
+    create: {
+      email: 'barista@brewlite.vn',
+      passwordHash: baristaHash,
+      fullName: 'Nhân viên Barista SGU',
+      role: 'BARISTA',
+    },
+  });
+
+  const managerHash = await bcrypt.hash('Manager@123', 10);
+  await prisma.user.upsert({
+    where: { email: 'manager@brewlite.vn' },
+    update: { role: 'MANAGER', fullName: 'Quản lý Cửa hàng BrewLite' },
+    create: {
+      email: 'manager@brewlite.vn',
+      passwordHash: managerHash,
+      fullName: 'Quản lý Cửa hàng BrewLite',
+      role: 'MANAGER',
+    },
+  });
+
   console.log('1. Seeding raw ingredients (Nguyên vật liệu thô)...');
   for (const ing of INITIAL_INGREDIENTS) {
     await prisma.ingredient.upsert({
