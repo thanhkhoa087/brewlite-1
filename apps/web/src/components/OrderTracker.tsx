@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, Clock, Coffee, Sparkles } from 'lucide-react';
+import { X, CheckCircle, Clock, Coffee, Sparkles, XCircle } from 'lucide-react';
 
 interface OrderTrackerProps {
   order: any;
@@ -15,8 +15,22 @@ const STEPS = [
   { key: 'COMPLETED', label: 'Sẵn sàng nhận', icon: Sparkles },
 ];
 
+const STATUS_TO_STEP: Record<string, number> = {
+  PENDING: 0,
+  PAID: 1,
+  PREPARING: 2,
+  COMPLETED: 3,
+};
+
 export function OrderTracker({ order, onClose }: OrderTrackerProps) {
-  const [currentStep, setCurrentStep] = useState(1); // 0: PENDING, 1: PAID, 2: PREPARING, 3: COMPLETED
+  const isCancelled = order?.status === 'CANCELLED';
+  const initialStep = STATUS_TO_STEP[order?.status] ?? 0;
+  const [currentStep, setCurrentStep] = useState(initialStep);
+
+  // Sync step whenever selected order changes
+  useEffect(() => {
+    setCurrentStep(STATUS_TO_STEP[order?.status] ?? 0);
+  }, [order?.id, order?.status]);
 
   // Lock body scroll when tracker is open
   useEffect(() => {
@@ -27,15 +41,16 @@ export function OrderTracker({ order, onClose }: OrderTrackerProps) {
     };
   }, []);
 
-  // Simulate Barista live updates
+  // Only simulate live Barista progress for freshly PAID orders
   useEffect(() => {
+    if (order?.status !== 'PAID') return;
     const t1 = setTimeout(() => setCurrentStep(2), 3500); // 3.5s -> PREPARING
     const t2 = setTimeout(() => setCurrentStep(3), 8000); // 8s -> COMPLETED
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, []);
+  }, [order?.id, order?.status]);
 
   if (!order) return null;
 
@@ -46,15 +61,21 @@ export function OrderTracker({ order, onClose }: OrderTrackerProps) {
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="bg-amber-800 text-white p-5 flex justify-between items-start">
+        <div
+          className={`${
+            isCancelled ? 'bg-red-700' : 'bg-amber-800'
+          } text-white p-5 flex justify-between items-start`}
+        >
           <div>
             <span className="text-[10px] uppercase font-bold tracking-widest text-amber-200">
-              Theo dõi đơn hàng thời gian thực
+              {isCancelled ? 'Đơn hàng đã hủy' : 'Theo dõi đơn hàng thời gian thực'}
             </span>
             <h3 className="font-bold text-lg mt-0.5">Mã đơn: #{order.orderCode || 'BWL-LIVE'}</h3>
-            <p className="text-xs text-amber-100/90 mt-1">
-              Giao dịch: {order.payment?.transactionCode || 'TX-MOCK-OK'}
-            </p>
+            {order.payment?.transactionCode && (
+              <p className="text-xs text-amber-100/90 mt-1">
+                Giao dịch: {order.payment.transactionCode}
+              </p>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -64,57 +85,70 @@ export function OrderTracker({ order, onClose }: OrderTrackerProps) {
           </button>
         </div>
 
-        {/* Timeline Progress */}
+        {/* Timeline Progress or Cancelled Notice */}
         <div className="p-6 border-b border-stone-100">
-          <div className="relative flex justify-between">
-            {/* Horizontal line */}
-            <div className="absolute top-4 left-4 right-4 h-0.5 bg-stone-200 -z-0">
-              <div
-                className="h-full bg-amber-800 transition-all duration-700"
-                style={{ width: `${(currentStep / (STEPS.length - 1)) * 100}%` }}
-              />
+          {isCancelled ? (
+            <div className="p-4 bg-red-50 rounded-2xl border border-red-200 text-center space-y-1.5">
+              <XCircle className="w-8 h-8 text-red-600 mx-auto" />
+              <p className="text-xs font-bold text-red-800">Đơn hàng này đã bị hủy</p>
+              <p className="text-[11px] text-red-700">
+                Định lượng nguyên liệu đã được hoàn lại kho. Vui lòng đặt đơn mới nếu cần.
+              </p>
             </div>
-
-            {STEPS.map((step, idx) => {
-              const Icon = step.icon;
-              const isPassed = idx <= currentStep;
-              const isCurrent = idx === currentStep;
-
-              return (
-                <div key={step.key} className="flex flex-col items-center relative z-10">
+          ) : (
+            <>
+              <div className="relative flex justify-between">
+                {/* Horizontal line */}
+                <div className="absolute top-4 left-4 right-4 h-0.5 bg-stone-200 -z-0">
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                      isPassed
-                        ? 'bg-amber-800 text-white ring-4 ring-amber-100 shadow'
-                        : 'bg-stone-200 text-stone-400'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <span
-                    className={`text-[10px] mt-2 font-medium ${
-                      isCurrent
-                        ? 'text-amber-900 font-bold'
-                        : isPassed
-                          ? 'text-stone-700'
-                          : 'text-stone-400'
-                    }`}
-                  >
-                    {step.label}
-                  </span>
+                    className="h-full bg-amber-800 transition-all duration-700"
+                    style={{ width: `${(currentStep / (STEPS.length - 1)) * 100}%` }}
+                  />
                 </div>
-              );
-            })}
-          </div>
 
-          {/* Current Status Message */}
-          <div className="mt-6 p-3 bg-amber-50 rounded-2xl border border-amber-200/70 text-center">
-            <p className="text-xs font-semibold text-amber-900">
-              {currentStep === 1 && 'Đơn hàng đã được xác nhận và gửi tới quầy Barista'}
-              {currentStep === 2 && 'Barista đang chuẩn bị nguyên liệu và pha chế đồ uống...'}
-              {currentStep === 3 && 'Đồ uống đã pha chế xong! Mời bạn tới quầy nhận món.'}
-            </p>
-          </div>
+                {STEPS.map((step, idx) => {
+                  const Icon = step.icon;
+                  const isPassed = idx <= currentStep;
+                  const isCurrent = idx === currentStep;
+
+                  return (
+                    <div key={step.key} className="flex flex-col items-center relative z-10">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                          isPassed
+                            ? 'bg-amber-800 text-white ring-4 ring-amber-100 shadow'
+                            : 'bg-stone-200 text-stone-400'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <span
+                        className={`text-[10px] mt-2 font-medium ${
+                          isCurrent
+                            ? 'text-amber-900 font-bold'
+                            : isPassed
+                              ? 'text-stone-700'
+                              : 'text-stone-400'
+                        }`}
+                      >
+                        {step.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Current Status Message */}
+              <div className="mt-6 p-3 bg-amber-50 rounded-2xl border border-amber-200/70 text-center">
+                <p className="text-xs font-semibold text-amber-900">
+                  {currentStep === 0 && 'Đơn hàng đã tạo và đang chờ hoàn tất thanh toán.'}
+                  {currentStep === 1 && 'Đơn hàng đã được xác nhận và gửi tới quầy Barista.'}
+                  {currentStep === 2 && 'Barista đang chuẩn bị nguyên liệu và pha chế đồ uống...'}
+                  {currentStep === 3 && 'Đồ uống đã pha chế xong! Mời bạn tới quầy nhận món.'}
+                </p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Order Details */}
@@ -123,11 +157,18 @@ export function OrderTracker({ order, onClose }: OrderTrackerProps) {
             Món đã đặt
           </h4>
           {order.items?.map((item: any, i: number) => (
-            <div key={i} className="flex justify-between py-1 border-b border-stone-100">
-              <span className="text-stone-700">
-                {item.quantity}x {item.name || 'Đồ uống tùy biến'} ({item.size})
-              </span>
-              <span className="font-bold text-stone-900">
+            <div key={i} className="flex justify-between py-1 border-b border-stone-100 gap-2">
+              <div className="text-stone-700">
+                <span>
+                  {item.quantity}x {item.product?.name || item.name || 'Đồ uống tùy biến'} ({item.size})
+                </span>
+                {Array.isArray(item.toppings) && item.toppings.length > 0 && (
+                  <p className="text-[10px] text-stone-400">
+                    Topping: {item.toppings.join(', ')}
+                  </p>
+                )}
+              </div>
+              <span className="font-bold text-stone-900 shrink-0">
                 {formatPrice(item.unitPrice * item.quantity)}
               </span>
             </div>

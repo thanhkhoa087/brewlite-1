@@ -202,7 +202,11 @@ export class OrdersService {
             },
           },
           include: {
-            items: true,
+            items: {
+              include: {
+                product: { select: { name: true, imageUrl: true } },
+              },
+            },
           },
         });
       });
@@ -243,6 +247,7 @@ export class OrdersService {
           computedItems.push({
             id: `item_${computedItems.length}_${Date.now()}`,
             productId: item.productId,
+            name: product.name,
             size,
             sweetLevel: item.sweetLevel ?? 100,
             iceLevel: item.iceLevel ?? 100,
@@ -344,7 +349,14 @@ export class OrdersService {
 
         return tx.order.findUnique({
           where: { id: orderId },
-          include: { items: true, payment: true },
+          include: {
+            items: {
+              include: {
+                product: { select: { name: true, imageUrl: true } },
+              },
+            },
+            payment: true,
+          },
         });
       });
 
@@ -413,7 +425,14 @@ export class OrdersService {
     try {
       const order = await this.prisma.order.findUnique({
         where: { id },
-        include: { items: true, payment: true },
+        include: {
+          items: {
+            include: {
+              product: { select: { name: true, imageUrl: true } },
+            },
+          },
+          payment: true,
+        },
       });
       if (order) return order;
     } catch {
@@ -432,7 +451,14 @@ export class OrdersService {
       const orders = await this.prisma.order.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
-        include: { items: true, payment: true },
+        include: {
+          items: {
+            include: {
+              product: { select: { name: true, imageUrl: true } },
+            },
+          },
+          payment: true,
+        },
       });
       if (orders.length > 0) return orders;
     } catch {
